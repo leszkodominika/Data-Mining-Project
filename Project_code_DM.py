@@ -123,10 +123,15 @@ sns.boxplot(x=df['HasChild'])#No outliers
 
 
 
-sns.boxplot(x=df['CustMonetVal'])#negative customer monetary value?not sure
+sns.boxplot(x=df['CustMonetVal'])#negative customer monetary value?not sure#lf_in case you dont know what this means: contract signed 
+#generates a value for the company (in the normalcase the insurance comapny makes money selling polices). Nervertheless each customer 
+#behavies on an idividual basis - therfore the value of the policy(customer here) can be evaluated on its on bases on what has happend in the past
+#and predictions of the future. You can see that customers who have a high claimsrate/claimsratio are usually valued negativ as the money earned by 
+#the insurance company is less that what the insuracne comapny has to pay to the customer for his valid claims, hence i am pretty sure that CustMonetVal and 
+#claimsratio  are negativly correlated# hahah -0.99 if thats no suprise ;)
 
 
-sns.boxplot(x=df['ClaimRate'])#not sure
+sns.boxplot(x=df['ClaimRate'])#not sure #lf claims rate is defined by Premium/Cost of claims
 
 
 sns.boxplot(x=df['PremLOB'])
@@ -141,11 +146,20 @@ sns.boxplot(x=df['PremLOBLife'])
 
 sns.boxplot(x=df['PremLOBWorkCompensation'])
 
+
+####heat map 
+sns.set(rc={'figure.figsize':(20,20)})
+sns.heatmap(df.corr(), annot=True)
+
+
+
 ##############Z Score
 
 from scipy import stats
 z = np.abs(stats.zscore(df))
 print(z)
+
+
 
 threshold = 3
 print(np.where(z > 3))#returns 1 array of rows and 2 array of columns of outliers
@@ -170,8 +184,3 @@ df_oZ.shape#Z score filters out 1101 outliers.its 10% of dataset
 
 df_oIQR = df[~((df < (Q1 - 1.5 * IQR)) |(df > (Q3 + 1.5 * IQR))).any(axis=1)]
 df_oIQR.shape#IQR filters out 2816 outliers. its 27%
-
-
-
-
-
