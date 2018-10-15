@@ -5,6 +5,8 @@ Created on Sat Oct 13 23:56:46 2018
 @author: dominika.leszko
 """
 
+####ESTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+
 import pandas as pd
 import numpy as np
 import seaborn as sns
