@@ -15,17 +15,11 @@ df=pd.read_csv(r'C:\Users\dominika.leszko\Desktop\NOVA IMS\Data Mining\DM Projec
 df = pd.DataFrame(df)
 pd.set_option('display.max_columns', None)
 
-#DOMINIKA: Why replacing empty columns with NaN?
-#from sklearn.preprocessing import Imputer
-#df = df.where(df!='')  # Replacing empty values with NaN
-#df=df.values
-#imputer = Imputer(missing_values=np.nan, strategy = 'median', axis = 0)
-#imputer = imputer.fit(df[:,-2:-1])
-#
-#df[:,-2:-1] = imputer.transform(df[:,-2:-1])
 
 df.info()
 df.describe()
+#replacing empty strings with nan
+df = df.replace({' ': np.nan})
 
 #Renaming columns for easier analysis
 df.columns.values
@@ -39,58 +33,114 @@ coldict={'Customer Identity':'CustId', 'First Policy´s Year':'1stPolYear', 'Bri
 
 df.rename(columns=coldict, inplace=True)
 
-df.columns.values
-
-##############################Handling Error Data##############################################################
 #
-#   1st Pol Year drop >2016 DONE
-#   Bday Year drop >2016 and <1900 DONE
-#   no error in education DONE
-#   gross month salary-drop outliers ????????????????????
-#   geography no errors DONE
-#   has children no errors DONE
-#   customer monetary, claims rate lets keep for now
-#   LOB all good  cause from system
+#plt.scatter('BirthYear', 'GrossMthSalary', data=df)
+#plt.xlim(1930,2000)
+#plt.ylim(0,6000)
+
+
+##############################Handling Outliers##############################################################
 
 df.shape#10296 rows, 14 columns
-
 
 df['1stPolYear'].describe()
 #Drop values >2016, as the database comes from 2016
 df = df.drop(df[df['1stPolYear']>2016].index)
+sns.kdeplot(df['1stPolYear'])
 
 
 df['BirthYear'].describe()
-#Drop values >2016 and <1900
-df=df.drop(df[df['BirthYear']>2016].index)
+#Drop values <1900
 df=df.drop(df[df['BirthYear']<1900].index)
+df['BirthYear'].hist(bins=50)
 
 df['GrossMthSalary'].describe()
 sns.boxplot(x=df['GrossMthSalary'])
-plt.xlim(30000,)
+#Drop Salary>30000
 df=df.drop(df[df['GrossMthSalary']>30000].index)
+df['GrossMthSalary'].hist(bins=50)
 
-#We dropped only 4 rows...
-
-#Can we drop odd LOB Premiums? See boxplots
 
 sns.boxplot(x=df['PremLOBMotor'])
+#Drop PremLOBMotor>2000
 df=df.drop(df[df['PremLOBMotor']>2000].index)
+sns.kdeplot(df['PremLOBMotor'])
 
 
-sns.boxplot(x=df['PremLOBHousehold'])#sigma rule? here is more outliers
+#df['PremLOBHousehold'].hist(bins=100)
+#plt.xlim(0,4000)
+#sns.boxplot(x=df['PremLOBHousehold'])
+#plt.xlim(0,4000)
+#sns.kdeplot(df['PremLOBHousehold'])
+## Calculate first and third quartile
+##10284 cols
+#first_quartile = df['PremLOBHousehold'].describe()['25%']
+#third_quartile = df['PremLOBHousehold'].describe()['75%']
+#
+##Interquartile range
+#iqr = third_quartile - first_quartile
+#
+## Remove outliers
+#df = df[df['PremLOBHousehold'] < (third_quartile + 3 * iqr)]
+##10161; 135 dropped
+df.shape#10284
+test1=[x for x in df['PremLOBHousehold'] if (x < (df['PremLOBHousehold'].mean() + 4*df['PremLOBHousehold'].std()))]
+len(test1)#10272; 12 dropped
+
 
 sns.boxplot(x=df['PremLOBHealth'])
+#Drop PremLOBHealth>5000
 df=df.drop(df[df['PremLOBHealth']>5000].index)
+sns.kdeplot(df['PremLOBHealth'])
 
 
-sns.boxplot(x=df['PremLOBLife'])
+plt.figure(figsize=(8,6))
+df['PremLOBLife'].hist()
+sns.boxplot(x=df['PremLOBLife'])#DOMINIKA:SAME, SKEWED!
+sns.kdeplot(df['PremLOBLife'])
+test2=[x for x in df['PremLOBLife'] if (x < (df['PremLOBLife'].mean() + 4*df['PremLOBLife'].std()))]
+len(test2)#10102; 182 dropped
 
 
-sns.boxplot(x=df['PremLOBWorkCompensation'])#sigma rule? more outliers
 
+#sns.boxplot(x=df['PremLOBWorkCompensation'])#DOMINIKA: SAME, SKEWED!
+#df=df.drop(df[df['PremLOBWorkCompensation']>5000].index)
+sns.kdeplot(df['PremLOBWorkCompensation'])
+plt.xlim(0,400)
+test3=[x for x in df['PremLOBWorkCompensation'] if (x < (df['PremLOBWorkCompensation'].mean() + 4*df['PremLOBWorkCompensation'].std()))]
+len(test3)#10138; 146 dropped
+
+##################################EDA#######################################################################################
+sns.set(rc={'figure.figsize':(20,20)})
+sns.heatmap(df.corr(), annot=True)
+
+################################FEATURE ENGINEERING AND SELECTION############################################################
+
+#Drop CustId
+df.drop(['CustId'], axis=1, inplace=True)
+
+#EduDegree is an object. Convert to ordinal.
+ord_edu=df['EduDegree'].str.split(' - ', 1, expand=True)
+ord_edu
+df['EduDegree']=ord_edu#DOMINIKA: This is still an object..
+
+df.info()
+
+#Feature Transformation_log
+numeric_subset = df.select_dtypes('number')
+for col in numeric_subset.columns:
+        numeric_subset['log_' + col] = np.log(numeric_subset[col])
+df2=pd.concat([df['EduDegree'], numeric_subset], axis=1)
+df2.shape
+df2.describe()
 
 #############################Handling null values################################################################
+###ON TRAIN DATA ONLY!!!!!!!!!
+
+X=df.drop('')
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test=train_test_split()
 
 sns.heatmap(df.isnull())
 
@@ -105,6 +155,7 @@ df.isnull().sum(axis=0)
 #1st Year-NN (30 nulls - mean/median?)
 plt.figure(figsize=(8,6))
 df['1stPolYear'].hist()
+plt.xlim(0,19999)
 
 #Education-NN (17 nulls -mean/median?)
 plt.figure(figsize=(8,6))
@@ -126,68 +177,7 @@ df['PremLOBMotor']=df['PremLOBMotor'].fillna(0)
 
 
 
-#df.dropna(subset=['1stPolYear'], inplace=True)
-##PremLOBWorkCompensation nulls replace with median
-#df['PremLOBWorkCompensation'].hist(bins=40)
-#df['PremLOBWorkCompensation']=df['PremLOBWorkCompensation'].fillna(df['PremLOBWorkCompensation'].median())
-#df['PremLOBWorkCompensation'].isnull().any()
-#
-##PremLOBLife nulls replace with median
-#df['PremLOBLife'].hist(bins=40)
-#df['PremLOBLife']=df['PremLOBLife'].fillna(df['PremLOBLife'].median())
-#df['PremLOBLife'].isnull().any()
-#
-##PremLOBHealth nulls replace with median
-#df['PremLOBHealth'].hist(bins=130)
-#plt.xlim(0,1000)
-#df['PremLOBHealth']=df['PremLOBHealth'].fillna(df['PremLOBHealth'].median())
-#df['PremLOBHealth'].isnull().any()
-#
-##PremLOB nulls replace with mean
-#df['PremLOB'].hist(bins=130)
-#plt.xlim(0,1000)#normal distribution, replace with mean
-#df['PremLOB']=df['PremLOBHealth'].fillna(df['PremLOB'].mean())
-#df['PremLOB'].isnull().any()
-#
-##HasChild nulls replace with median
-#df['HasChild'].hist(bins=10)
-#df['HasChild']=df['HasChild'].fillna(df['HasChild'].median())
-#df['HasChild'].isnull().any()
-#
-#
-##GrossMthSalary nulls replace with
-#df['GrossMthSalary'].hist(bins=100)
-#plt.xlim(0,7000)#normal distribution, replace with mean
-#df['GrossMthSalary']=df['GrossMthSalary'].fillna(df['GrossMthSalary'].mean())
-#df['GrossMthSalary'].isnull().any()
-#
-##BirthYear, 1stPolYear, GeoLivArea, EduDegree
-#df.dropna(subset=['BirthYear'], inplace=True)
-#
-#df.dropna(subset=['EduDegree'], inplace=True)
 
-################################TRANSFORMING AND CLEANING DATA############################################################
-
-#Drop CustId
-df.drop(['CustId'], axis=1, inplace=True)
-
-#EduDegree is an object. Convert to ordinal.
-
-df.describe()
-df.info()
-
-#degree_dummies=pd.get_dummies(df['EduDegree'], drop_first=False)
-#df.drop(['EduDegree'], axis=1, inplace=True)
-#df=pd.concat([df, degree_dummies], axis=1)
-
-ord_edu=df['EduDegree'].str.split(' - ', 1, expand=True)
-df['EduDegree']=ord_edu[0]
-
-######################DETECTING OUTLIERS########################
-
-####heat map 
-sns.set(rc={'figure.figsize':(20,20)})
-sns.heatmap(df.corr(), annot=True)
 
 
 ##############Z Score
@@ -223,3 +213,13 @@ df_oIQR = df[~((df < (Q1 - 1.5 * IQR)) |(df > (Q3 + 1.5 * IQR))).any(axis=1)]
 df_oIQR.shape#IQR filters out 2816 outliers. its 27%
 
 df.head()
+
+##
+
+#from sklearn.preprocessing import Imputer#DONE AT THE TOP
+#df = df.where(df!='')  # Replacing empty values with NaN
+df=df.values
+imputer = Imputer(missing_values=np.nan, strategy = 'median', axis = 0)
+imputer = imputer.fit(df[:,-2:-1])
+
+df[:,-2:-1] = imputer.transform(df[:,-2:-1])
