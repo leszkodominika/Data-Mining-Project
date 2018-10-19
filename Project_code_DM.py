@@ -275,4 +275,32 @@ i=0
 for index in y_test.index:
     df['HasChild'][index] = y_pred[i]
     i+=1
+       
+#### Decision Tree   ##########################################################
+    
+X = df.drop(columns=['EduDegree'])
+y = df['EduDegree']
+
+y_train = y
+y_test = y.loc[y.isin(list(y[y.isna()== True]))]
+X_train = pd.DataFrame(X.loc[y.isin(list(y[y.isna()== False]))])
+X_test  = pd.DataFrame(X.loc[y.isin(list(y[y.isna()== True ]))])
+y_train = y.dropna()
+
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+labelEncoder1 = LabelEncoder()
+y_train = labelEncoder1.fit_transform(y_train)
+
+# Fitting Decision Tree Regression to the dataset
+from sklearn.tree import DecisionTreeRegressor
+regressor = DecisionTreeRegressor(random_state = 0)
+regressor.fit(X_train, y_train)
+
+# Predicting a new result
+y_pred = regressor.predict(X_test)
+
+i=0
+for index in y_test.index:
+    df['EduDegree'][index] = y_pred[i]
+    i+=1       
 ###############################################################################
