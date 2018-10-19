@@ -66,3 +66,8 @@ For now we will model without caring about outliers.
 Correlation
 drop Id column
 PCA/Backward vs Forward elimination
+
+----------------------------------------------------Questions
+1) apply sigmas to skewed variables
+2) how to split train-test
+
