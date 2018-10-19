@@ -249,5 +249,30 @@ for index in y_test.index:
     df['BirthYear'][index] = y_pred[i]
     i+=1
 
+##### K-Nearest Neighbors #####################################################
+
+X = df.drop(columns=['HasChild'])
+y = df['HasChild']
+
+y_train = y
+y_test = y_train.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== False]))]
+X_train = pd.DataFrame(X.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== True]))])
+X_test = pd.DataFrame(X.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== False]))])
+y_train = y_train.dropna()
+
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+from sklearn.neighbors import KNeighborsClassifier
+classifier = KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2)
+classifier.fit(X_train, y_train)
+
+y_pred = classifier.predict(X_test)
+
+i=0
+for index in y_test.index:
+    df['HasChild'][index] = y_pred[i]
+    i+=1
 ###############################################################################
-  
