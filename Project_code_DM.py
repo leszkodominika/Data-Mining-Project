@@ -86,6 +86,8 @@ sns.kdeplot(df['PremLOBMotor'])
 df.shape#10284
 test1=[x for x in df['PremLOBHousehold'] if (x < (df['PremLOBHousehold'].mean() + 4*df['PremLOBHousehold'].std()))]
 len(test1)#10272; 12 dropped
+#LOG:
+df['PremLOBHousehold']=np.log(df['PremLOBHousehold'])
 
 
 sns.boxplot(x=df['PremLOBHealth'])
@@ -100,6 +102,9 @@ sns.boxplot(x=df['PremLOBLife'])#DOMINIKA:SAME, SKEWED!
 sns.kdeplot(df['PremLOBLife'])
 test2=[x for x in df['PremLOBLife'] if (x < (df['PremLOBLife'].mean() + 4*df['PremLOBLife'].std()))]
 len(test2)#10102; 182 dropped
+#LOG:
+df['PremLOBLife']=np.log(df['PremLOBLife'])
+
 
 
 
@@ -109,6 +114,8 @@ sns.kdeplot(df['PremLOBWorkCompensation'])
 plt.xlim(0,400)
 test3=[x for x in df['PremLOBWorkCompensation'] if (x < (df['PremLOBWorkCompensation'].mean() + 4*df['PremLOBWorkCompensation'].std()))]
 len(test3)#10138; 146 dropped
+#LOG:
+df['PremLOBWorkCompensation']=np.log(df['PremLOBWorkCompensation'])
 
 ##################################EDA#######################################################################################
 sns.set(rc={'figure.figsize':(20,20)})
