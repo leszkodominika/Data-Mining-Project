@@ -130,9 +130,9 @@ df.drop(['CustId'], axis=1, inplace=True)
 
 #EduDegree is an object. Convert to ordinal.
 ord_edu=df['EduDegree'].str.split(' - ', 1, expand=True)
-ord_edu
-df['EduDegree']=ord_edu#DOMINIKA: This is still an object..
-
+ord_edu=ord_edu[0].astype(float)
+df['ord_edu']=ord_edu
+df.drop('EduDegree', inplace=True, axis=1)
 df.info()
 
 #Feature Transformation_log
