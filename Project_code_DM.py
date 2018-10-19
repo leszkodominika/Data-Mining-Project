@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Oct 13 23:56:46 2018
+Created on Fri Oct 19 19:24:28 2018
 
 @author: dominika.leszko
 """
+
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -67,27 +68,18 @@ df=df.drop(df[df['PremLOBMotor']>2000].index)
 sns.kdeplot(df['PremLOBMotor'])
 
 
-#df['PremLOBHousehold'].hist(bins=100)
-#plt.xlim(0,4000)
-#sns.boxplot(x=df['PremLOBHousehold'])
-#plt.xlim(0,4000)
-#sns.kdeplot(df['PremLOBHousehold'])
-## Calculate first and third quartile
-##10284 cols
-#first_quartile = df['PremLOBHousehold'].describe()['25%']
-#third_quartile = df['PremLOBHousehold'].describe()['75%']
-#
-##Interquartile range
-#iqr = third_quartile - first_quartile
-#
-## Remove outliers
-#df = df[df['PremLOBHousehold'] < (third_quartile + 3 * iqr)]
-##10161; 135 dropped
-df.shape#10284
-test1=[x for x in df['PremLOBHousehold'] if (x < (df['PremLOBHousehold'].mean() + 4*df['PremLOBHousehold'].std()))]
-len(test1)#10272; 12 dropped
-#LOG:
-df['PremLOBHousehold']=np.log(df['PremLOBHousehold'])
+df['PremLOBHousehold'].hist(bins=100)# SKEWED!!!!!!!!!
+plt.xlim(0,4000)
+sns.boxplot(x=df['PremLOBHousehold'])
+plt.xlim(0,2000)
+#LOG
+df['PremLOBHousehold'].min()#min is -75
+df['PremLOBHousehold']=np.log(df['PremLOBHousehold'] + 1 - min(df['PremLOBHousehold']))
+df['PremLOBHousehold'].min()#min is 0
+sns.kdeplot(df['PremLOBHousehold'])
+#DELETE OUTLIERS
+test1=[x for x in df['PremLOBHousehold'] if (x < (df['PremLOBHousehold'].mean() + 3*df['PremLOBHousehold'].std()) or x > (df['PremLOBHousehold'].mean() - 3*df['PremLOBHousehold'].std()))]
+
 
 
 sns.boxplot(x=df['PremLOBHealth'])
@@ -98,28 +90,38 @@ sns.kdeplot(df['PremLOBHealth'])
 
 plt.figure(figsize=(8,6))
 df['PremLOBLife'].hist()
-sns.boxplot(x=df['PremLOBLife'])#DOMINIKA:SAME, SKEWED!
+sns.boxplot(x=df['PremLOBLife'])#SKEWED!!!!!!!!
 sns.kdeplot(df['PremLOBLife'])
-test2=[x for x in df['PremLOBLife'] if (x < (df['PremLOBLife'].mean() + 4*df['PremLOBLife'].std()))]
-len(test2)#10102; 182 dropped
-#LOG:
-df['PremLOBLife']=np.log(df['PremLOBLife'])
+#LOG
+df['PremLOBLife'].min()#min is -7
+df['PremLOBLife']=np.log(df['PremLOBLife'] + 1 - min(df['PremLOBLife']))
+df['PremLOBLife'].min()#min is 0
+#DELETE OUTLIERS
+test2=[x for x in df['PremLOBLife'] if (x < (df['PremLOBLife'].mean() + 3*df['PremLOBLife'].std()) or x > (df['PremLOBLife'].mean() - 3*df['PremLOBLife'].std()))]
+len(test2)
 
 
-
-
-#sns.boxplot(x=df['PremLOBWorkCompensation'])#DOMINIKA: SAME, SKEWED!
-#df=df.drop(df[df['PremLOBWorkCompensation']>5000].index)
-sns.kdeplot(df['PremLOBWorkCompensation'])
-plt.xlim(0,400)
+sns.boxplot(x=df['PremLOBWorkCompensation'])
+#drop >5000
+df=df.drop(df[df['PremLOBWorkCompensation']>5000].index)
+sns.kdeplot(df['PremLOBWorkCompensation'])#SKEWED!!!!
+#LOG
+df['PremLOBWorkCompensation'].min()#min is -12
+df['PremLOBWorkCompensation']=np.log(df['PremLOBWorkCompensation'] + 1 - min(df['PremLOBWorkCompensation']))
+df['PremLOBWorkCompensation'].min()#min is 0
+#DELETE OUTLIERS
 test3=[x for x in df['PremLOBWorkCompensation'] if (x < (df['PremLOBWorkCompensation'].mean() + 4*df['PremLOBWorkCompensation'].std()))]
 len(test3)#10138; 146 dropped
-#LOG:
-df['PremLOBWorkCompensation']=np.log(df['PremLOBWorkCompensation'])
+
+
 
 ##################################EDA#######################################################################################
 sns.set(rc={'figure.figsize':(20,20)})
 sns.heatmap(df.corr(), annot=True)
+
+sns.pairplot(df)
+
+
 
 ################################FEATURE ENGINEERING AND SELECTION############################################################
 
@@ -256,7 +258,7 @@ y = df['HasChild']
 
 y_train = y
 y_test = y_train.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== False]))]
-X_train = pd.DataFrame(X.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== True]))])
+X_train = pd.DataFrame(X.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== True]))])#DOMINIKA:Shouldnt be >-1?
 X_test = pd.DataFrame(X.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== False]))])
 y_train = y_train.dropna()
 
