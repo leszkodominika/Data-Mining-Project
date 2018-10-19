@@ -230,3 +230,24 @@ imputer = Imputer(missing_values=np.nan, strategy = 'median', axis = 0)
 imputer = imputer.fit(df[:,-2:-1])
 
 df[:,-2:-1] = imputer.transform(df[:,-2:-1])
+
+#### Replacing missing data with Regression ###################################
+
+y_train = df['BirthYear']
+y_test = y_train.loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))]
+X_train = pd.DataFrame(df['GrossMthSalary'].loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== True ]))])
+X_test  = pd.DataFrame(df['GrossMthSalary'].loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))])
+y_train = y_train.dropna()
+
+from sklearn.linear_model import LinearRegression
+regressor = LinearRegression()
+regressor.fit(X_train, y_train)
+y_pred= regressor.predict(X_test)
+
+i=0
+for index in y_test.index:
+    df['BirthYear'][index] = y_pred[i]
+    i+=1
+
+###############################################################################
+  
