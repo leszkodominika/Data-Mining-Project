@@ -2,26 +2,24 @@ Schedule:
 Monday: Ask Joel about DM questions, Homwework pdf shared by Lukas
 Tuesday: Questions about homework to the professor, finish homework report, fit DM data code
 
-
-
-# Data-Mining-Project
 Questions:
-1) Database info (Description and formulas for all the columns,  why all LOB so highly correlated, what are these LOB columns?)
 
-When presenting model we need to give red flags: what we assume, what we found etc. write about all the issues
-Dont remove more than 10% of data!
-for outliers max 3%
+Questions Data Mining:
+1)	3 sigma didn’t drop outliers in one case
+2)	Is log of 0 ok? 
+#LOG OF VALUE 0? 
+df['PremLOBHousehold'].min()#min is -75
+df['PremLOBHousehold']=np.log(df['PremLOBHousehold'] + 1 - min(df['PremLOBHousehold']))
+#ACTUALLY I THINK ITS OK, WE DID+1 SO THERES NO LOG OF 0….
+df['PremLOBHousehold'].min()#min is 0#THEN ITS JUST THE RESULT OF LOF WHICH IS 0
+3)	Should we do log of all numeric variables? or is Standard Scaler going to do the job (normalize)
+4)	Should we scale binary?  Ordinal?
+5)	Can we make a cardinal variable of education? But then, how is distance going to be measured in models such as clustering where distance is calculated? Do we include categorical variables in such models? 
+6)	How does label encoder assign labels to category, alphabetical or..?
+7)	Is it ok to use kde plot to check the distribution?
 
--LOB column: someone actually paid the premium? and if not then what is this value? (interpretation) Yes, paid. 
--What if someone under 18 has value in LOB Premium Motor Insurance?
--What does Premium LOB negative mean? someone paid last year, then dropped insurance and is getting back the money or is getting a refund from last year
--Premium Amount higher than salary?
--All LOB highly correlated?
--What does it mean that 1st policy year BEFORE birth year? In modify phase. Drop column or Drop rows with nonsense bday (but we will lose info if its a lot).or replace with mean or median 
--Formulas for LOB columns? (coolinearility)
-
-
-replacing "wrong" data with some mean or something like that instead of droping that observation
+*** Which models require data scaling?
+*** Which models require normal distribution?
 
 
                                                       Tasks:
@@ -72,8 +70,3 @@ For now we will model without caring about outliers.
 Correlation
 drop Id column
 PCA/Backward vs Forward elimination
-
-----------------------------------------------------Questions
-1) apply sigmas to skewed variables
-2) how to split train-test
-
