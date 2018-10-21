@@ -1,3 +1,9 @@
+Schedule:
+Monday: Ask Joel about DM questions, Homwework pdf shared by Lukas
+Tuesday: Questions about homework to the professor, finish homework report, fit DM data code
+
+
+
 # Data-Mining-Project
 Questions:
 1) Database info (Description and formulas for all the columns,  why all LOB so highly correlated, what are these LOB columns?)
