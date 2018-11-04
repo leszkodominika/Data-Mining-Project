@@ -7,3 +7,5 @@ Create 2 datastes:
 -We do regression only on data without errors/outliers
 -Implement one scaler (minmax/standard) and put some reasoning why we chose that one. 
 -don’t scale binary
+
+-Organize code: Dominika
