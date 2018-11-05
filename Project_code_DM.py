@@ -30,10 +30,9 @@ coldict={'Customer Identity':'CustId', 'First Policy´s Year':'1stPolYear', 'Bri
 df.rename(columns=coldict, inplace=True)
 
 
-
 ### 3. HANDLING OUTLIERS AND SKEWNESS##########################################
 
-df.shape#columns: rows: 
+df.shape#rows: 10296 
 
 df['1stPolYear'].describe()
 #Drop values >2016, as the database comes from 2016
@@ -62,7 +61,7 @@ sns.boxplot(x=df['PremLOBHealth'])
 df=df.drop(df[df['PremLOBHealth']>5000].index)
 sns.kdeplot(df['PremLOBHealth']).set_title('Premiums in LOB: Health')
 
-# SKEWED!!!!!!!!!
+# SKEWED!!!!!!!!!Dropped 90
 df['PremLOBHousehold'].hist(bins=100).set_title('Premiums in LOB: Household')
 plt.xlim(0,4000)
 #Skewed distribution -> Perform log transformation
@@ -72,36 +71,69 @@ df=df[np.abs(df['PremLOBHousehold'] - df['PremLOBHousehold'].mean())<=3*df['Prem
 sns.boxplot(x=df['PremLOBHousehold'])
 
 
-
-# SKEWED!!!!!!!!!
+# SKEWED!!!!!!!!!Dropped 165
 df['PremLOBLife'].hist().set_title('Premiums in LOB: Life')
 #Skewed distribution -> Perform log transformation
 df['PremLOBLife']=np.log(df['PremLOBLife'] + 1 - min(df['PremLOBLife']))
-#Applying 3 sigma rule for outliers
+#Applying 3 sigma rule for outliers#
 df=df[np.abs(df['PremLOBLife'] - df['PremLOBLife'].mean())<=3*df['PremLOBLife'].std()]
 sns.boxplot(x=df['PremLOBLife'])
 
-
-# SKEWED!!!!!!!!!
-sns.boxplot(x=df['PremLOBWorkCompensation'])
-##drop >400
-#df=df.drop(df[df['PremLOBWorkCompensation']>400].index)
-#sns.kdeplot(df['PremLOBWorkCompensation']).set_title('PremLOBWorkCompensation')
+# SKEWED!!!!!!!!!Dropped 167
+df['PremLOBWorkCompensation'].hist(bins=100).set_title('PremLOBWorkCompensation in LOB: Life')
 #Skewed distribution -> Perform log transformation
 df['PremLOBWorkCompensation']=np.log(df['PremLOBWorkCompensation'] + 1 - min(df['PremLOBWorkCompensation']))
 #Applying 3 sigma rule for outliers
 df=df[np.abs(df['PremLOBWorkCompensation'] - df['PremLOBWorkCompensation'].mean())<=3*df['PremLOBWorkCompensation'].std()]
 sns.boxplot(x=df['PremLOBWorkCompensation'])
 
+#rows: 9862 --> meaning 434 rows dropped (4.2%)
+
 ### 4. HANDLING MISSING VALUES ################################################
 
-df.info()
-df.describe()
 
 df = df.replace({'': np.nan})
 
-df.isna().any()
-df.isnull().sum(axis=0)
+def missing_values_table(df):
+        # Total missing values
+        mis_val = df.isnull().sum()
+        
+        # Percentage of missing values
+        mis_val_percent = 100 * df.isnull().sum() / len(df)
+        
+        # Make a table with the results
+        mis_val_table = pd.concat([mis_val, mis_val_percent], axis=1)
+        
+        # Rename the columns
+        mis_val_table_ren_columns = mis_val_table.rename(
+        columns = {0 : 'Missing Values', 1 : '% of Total Values'})
+        
+        # Sort the table by percentage of missing descending
+        mis_val_table_ren_columns = mis_val_table_ren_columns[
+            mis_val_table_ren_columns.iloc[:,1] != 0].sort_values(
+        '% of Total Values', ascending=False).round(2)
+        
+        # Print some summary information
+        print ("Your selected dataframe has " + str(df.shape[1]) + " columns.\n"      
+            "There are " + str(mis_val_table_ren_columns.shape[0]) +
+              " columns that have missing values.")
+        
+        # Return the dataframe with missing information
+        return mis_val_table_ren_columns
+    
+missing_values_table(df)
+
+#Replace Premium LOB null values with 0 --> null means not insured, didn't pay
+df['PremLOBHealth']=df['PremLOBHealth'].fillna(0)
+df['PremLOBMotor']=df['PremLOBMotor'].fillna(0)
+
+#Geogrpahy-NN (1 null- missing a lot of other columns, DROP!)
+df=df.dropna(subset=['GeoLivArea'])
+
+#1st Year-KNN (30 nulls - mean/median?)
+plt.figure(figsize=(8,6))
+df['1stPolYear'].hist()
+
 
 #### Replacing missing data with Regression ###################################
 
@@ -123,14 +155,14 @@ for index in y_test.index:
     df['BirthYear'][index] = y_pred[i]
     i+=1
 
-#####Replacing missing data with K-Nearest Neighbors #####################################################
+#####Replacing missing data with K-Nearest Neighbors ###############################
 
 X = df.drop(columns=['HasChild'])
 y = df['HasChild']
 
 y_train = y
 y_test = y_train.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== False]))]
-X_train = pd.DataFrame(X.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== True]))])#DOMINIKA:Shouldnt be >-1?
+X_train = pd.DataFrame(X.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== True]))])
 X_test = pd.DataFrame(X.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== False]))])
 y_train = y_train.dropna()
 
@@ -150,7 +182,7 @@ for index in y_test.index:
     df['HasChild'][index] = y_pred[i]
     i+=1
        
-####Replacing missing data with Decision Tree   ##########################################################
+####Replacing missing data with Decision Tree   #####################################
     
 X = df.drop(columns=['EduDegree'])
 y = df['EduDegree']
@@ -177,70 +209,26 @@ i=0
 for index in y_test.index:
     df['EduDegree'][index] = y_pred[i]
     i+=1       
-###############################################################################
 
 
-#1st Year-KNN (30 nulls - mean/median?)
-plt.figure(figsize=(8,6))
-df['1stPolYear'].hist()
-
-#Education-NN (17 nulls -mean/median?)
-plt.figure(figsize=(8,6))
-df['EduDegree'].hist()
-
-#Geogrpahy-NN (1 null- missing a lot of other columns, DROP!)
-df=df.dropna(subset=['GeoLivArea'])
-
-#Has children-NN (21 nulls, KNN/replace with 1?) after doing knn if 80% has 1 then its good!
-df['HasChild']=df['HasChild'].fillna(1)
-
-#Customer Monet-NO NULLS
-#Claims Ratio - NO NULLS
-
-#Replace Premium LOB values with 0 --> null means not insured, didn't pay
-df['PremLOBWorkCompensation']=df['PremLOBWorkCompensation'].fillna(0)
-df['PremLOBLife']=df['PremLOBLife'].fillna(0)
-df['PremLOBHealth']=df['PremLOBHealth'].fillna(0)
-df['PremLOBMotor']=df['PremLOBMotor'].fillna(0)
-
-
-
-##################################Exploratory Data Analysis#####################################################################
+### 5. EXPLORATORY DATA ANALYSIS###############################################
 #to verify: drop null before visualizing?
 sns.set(rc={'figure.figsize':(20,20)})
 sns.heatmap(df.corr(), annot=True)
 
 sns.pairplot(df)
 
-#DO MORE VISUALIZATIONS, search for relations!
 
-################################FEATURE ENGINEERING AND SELECTION############################################################
+
+### 6. FEATURE ENGINEERING AND SELECTION#######################################
 
 #Drop CustId
 df.drop(['CustId'], axis=1, inplace=True)
 
-#EduDegree is an object. Convert to ordinal.
-df['EduDegree'].head(10)
-df.info()
-
-ord_edu=df['EduDegree'].str.split(' - ', 1, expand=True)#Is it ok to use ordinal here? How is distance going to be measured then? PS+HS != Phd.
-#do we include categorical variables in clustering where we calculate distance?
-#How label encoder would code these? alphabetic?
-ord_edu=ord_edu[0].astype(int)
-df['ord_edu']=ord_edu
-df.drop('EduDegree', inplace=True, axis=1)
-
-df.info()
-df.head()
-
-#Feature Transformation_log#should we do log of all numeric variables? or is Standard Scaler going to do the job (normalize)
-numeric_subset = df.select_dtypes('number')
-#remove ord_edu from this!!!
-for col in numeric_subset.columns:
-        numeric_subset['log_' + col] = np.log(numeric_subset[col])
-df2=pd.concat([df['EduDegree'], numeric_subset], axis=1)
-df2.shape
-df2.describe()
+#Convert EduDegree to dummies and drop one column to avoid dummy trap
+edu_dummies=pd.get_dummies(df['EduDegree'], drop_first=True)
+df.drop(['EduDegree'], axis=1, inplace=True)
+df=pd.concat([df, edu_dummies], axis=1)
 
 
 #DO DATA SCALING AND MAKE MEAN=1,STD=1 (Z SCORE). We need it scale cause its clustering
@@ -290,8 +278,7 @@ df2.describe()
 #df[:,-2:-1] = imputer.transform(df[:,-2:-1])
 
 
-#############################
-##########################################################MODELLING##################################################################
+### 7. MODELLING ##############################################################
 
 from sklearn.cluster import KMeans
 
@@ -362,7 +349,7 @@ df_numerical['kmean']=kmeans.fit_predict(df_numerical)
 
 df_numerical['kmean'].hist()
 l1 = [df['EduDegree'],df['HasChild'],df['GeoLivArea']]
-df['hc_split'] = pd.concat(, axis=1 )
+#df['hc_split'] = pd.concat(, axis=1 )
 
 
 df['hc_split'] = df['EduDegree'].map(str) + df['HasChild'].map(str) + df['GeoLivArea'].map(str)
