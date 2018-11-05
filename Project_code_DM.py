@@ -1,116 +1,104 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Oct 19 19:24:28 2018
-
 @author: dominika.leszko
 """
+### DATA MINING PROJECT #######################################################
+###############################################################################
+
+### 1. IMPORTING THE LIBRARIES#################################################
 
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+### 2. IMPORTING THE DATASET###################################################
 df=pd.read_csv(r'C:\Users\dominika.leszko\Desktop\NOVA IMS\Data Mining\DM Project\A2Z Insurance.csv')
-
-#from sklearn.preprocessing import Imputer
 df = pd.DataFrame(df)
+
+#Display all columns
 pd.set_option('display.max_columns', None)
 
-
-df.info()
-df.describe()
-#replacing empty strings with nan
-df = df.replace({'': np.nan})
-
-#Renaming columns for easier analysis
-df.columns.values
-
+#Rename columns
 coldict={'Customer Identity':'CustId', 'First Policy´s Year':'1stPolYear', 'Brithday Year':'BirthYear',
        'Educational Degree':'EduDegree', 'Gross Monthly Salary':'GrossMthSalary',
        'Geographic Living Area':'GeoLivArea', 'Has Children (Y=1)':'HasChild',
        'Customer Monetary Value':'CustMonetVal', 'Claims Rate':'ClaimRate', 'Premiums in LOB: Motor':'PremLOBMotor',
        'Premiums in LOB: Household':'PremLOBHousehold', 'Premiums in LOB: Health':'PremLOBHealth',
        'Premiums in LOB:  Life':'PremLOBLife', 'Premiums in LOB: Work Compensations':'PremLOBWorkCompensation'}
-
 df.rename(columns=coldict, inplace=True)
 
-##############################Handling Outliers##############################################################
 
-df.shape#10296 rows, 14 columns
+
+### 3. HANDLING OUTLIERS AND SKEWNESS##########################################
+
+df.shape#columns: rows: 
 
 df['1stPolYear'].describe()
 #Drop values >2016, as the database comes from 2016
 df = df.drop(df[df['1stPolYear']>2016].index)
-sns.kdeplot(df['1stPolYear'])
-
+sns.kdeplot(df['1stPolYear']).set_title('1st Policy Year')
 
 df['BirthYear'].describe()
 #Drop values <1900
 df=df.drop(df[df['BirthYear']<1900].index)
-df['BirthYear'].hist(bins=50)
+df['BirthYear'].hist(bins=50).set_title('Birth Year')
 
 df['GrossMthSalary'].describe()
 sns.boxplot(x=df['GrossMthSalary'])
 #Drop Salary>30000
 df=df.drop(df[df['GrossMthSalary']>30000].index)
-df['GrossMthSalary'].hist(bins=50)
+df['GrossMthSalary'].hist(bins=50).set_title('Gross  Monthly Salary')
 
-
+df['PremLOBMotor'].describe()
 sns.boxplot(x=df['PremLOBMotor'])
 #Drop PremLOBMotor>2000
 df=df.drop(df[df['PremLOBMotor']>2000].index)
-sns.kdeplot(df['PremLOBMotor'])
-
-
-df['PremLOBHousehold'].hist(bins=100)# SKEWED!!!!!!!!!
-plt.xlim(0,4000)
-sns.boxplot(x=df['PremLOBHousehold'])
-plt.xlim(0,2000)
-df['PremLOBHousehold'].describe()
-#LOG OF VALUE 0? 
-df['PremLOBHousehold'].min()#min is -75
-df['PremLOBHousehold']=np.log(df['PremLOBHousehold'] + 1 - min(df['PremLOBHousehold']))
-df['PremLOBHousehold'].min()#min is 0
-sns.kdeplot(df['PremLOBHousehold'])
-df['PremLOBHousehold'].describe()
-#DELETE OUTLIERS NOTHING DROPPED?
-test1=[x for x in df['PremLOBHousehold'] if (x < (df['PremLOBHousehold'].mean() + 2.5*df['PremLOBHousehold'].std()) or x > (df['PremLOBHousehold'].mean() - 2.5*df['PremLOBHousehold'].std()))]
-
+sns.kdeplot(df['PremLOBMotor']).set_title('Premiums in LOB: Motor')
 
 sns.boxplot(x=df['PremLOBHealth'])
 #Drop PremLOBHealth>5000
 df=df.drop(df[df['PremLOBHealth']>5000].index)
-sns.kdeplot(df['PremLOBHealth'])
+sns.kdeplot(df['PremLOBHealth']).set_title('Premiums in LOB: Health')
+
+# SKEWED!!!!!!!!!
+df['PremLOBHousehold'].hist(bins=100).set_title('Premiums in LOB: Household')
+plt.xlim(0,4000)
+#Skewed distribution -> Perform log transformation
+df['PremLOBHousehold']=np.log(df['PremLOBHousehold'] + 1 - min(df['PremLOBHousehold']))
+#Applying 3 sigma rule for outliers
+df=df[np.abs(df['PremLOBHousehold'] - df['PremLOBHousehold'].mean())<=3*df['PremLOBHousehold'].std()]
+sns.boxplot(x=df['PremLOBHousehold'])
 
 
-plt.figure(figsize=(8,6))
-df['PremLOBLife'].hist()
-sns.boxplot(x=df['PremLOBLife'])#SKEWED!!!!!!!!
-sns.kdeplot(df['PremLOBLife'])
-df['PremLOBLife'].hist()
-#LOG
-df['PremLOBLife'].min()#min is -7
+
+# SKEWED!!!!!!!!!
+df['PremLOBLife'].hist().set_title('Premiums in LOB: Life')
+#Skewed distribution -> Perform log transformation
 df['PremLOBLife']=np.log(df['PremLOBLife'] + 1 - min(df['PremLOBLife']))
-df['PremLOBLife'].min()#min is 0
-#DELETE OUTLIERS
-test2=[x for x in df['PremLOBLife'] if (x < (df['PremLOBLife'].mean() + 3*df['PremLOBLife'].std()) or x > (df['PremLOBLife'].mean() - 3*df['PremLOBLife'].std()))]
-len(test2)
+#Applying 3 sigma rule for outliers
+df=df[np.abs(df['PremLOBLife'] - df['PremLOBLife'].mean())<=3*df['PremLOBLife'].std()]
+sns.boxplot(x=df['PremLOBLife'])
 
 
+# SKEWED!!!!!!!!!
 sns.boxplot(x=df['PremLOBWorkCompensation'])
-#drop >5000
-df=df.drop(df[df['PremLOBWorkCompensation']>5000].index)
-sns.kdeplot(df['PremLOBWorkCompensation'])#SKEWED!!!! Plot starts below 0 in kde??????? why such small numbers before we use log?????
-#LOG
-df['PremLOBWorkCompensation'].min()#min is -12
+##drop >400
+#df=df.drop(df[df['PremLOBWorkCompensation']>400].index)
+#sns.kdeplot(df['PremLOBWorkCompensation']).set_title('PremLOBWorkCompensation')
+#Skewed distribution -> Perform log transformation
 df['PremLOBWorkCompensation']=np.log(df['PremLOBWorkCompensation'] + 1 - min(df['PremLOBWorkCompensation']))
-df['PremLOBWorkCompensation'].min()#min is 0
-#DELETE OUTLIERS
-test3=[x for x in df['PremLOBWorkCompensation'] if (x < (df['PremLOBWorkCompensation'].mean() + 4*df['PremLOBWorkCompensation'].std()))]
-len(test3)#10138; 146 dropped
+#Applying 3 sigma rule for outliers
+df=df[np.abs(df['PremLOBWorkCompensation'] - df['PremLOBWorkCompensation'].mean())<=3*df['PremLOBWorkCompensation'].std()]
+sns.boxplot(x=df['PremLOBWorkCompensation'])
 
+### 4. HANDLING MISSING VALUES ################################################
 
-#############################Handling null values################################################################
+df.info()
+df.describe()
+
+df = df.replace({'': np.nan})
 
 df.isna().any()
 df.isnull().sum(axis=0)
@@ -303,5 +291,106 @@ df2.describe()
 
 
 #############################
+##########################################################MODELLING##################################################################
+
+from sklearn.cluster import KMeans
+
+df=pd.read_csv(r'C:\Users\dominika.leszko\Desktop\NOVA IMS\Data Mining\DM Project\A2Z Insurance.csv')
+
+#from sklearn.preprocessing import Imputer
+df = pd.DataFrame(df)
+
+df = df.replace({'': np.nan})
+
+#Renaming columns for easier analysis
+df.columns.values
+
+coldict={'Customer Identity':'CustId', 'First Policy´s Year':'1stPolYear', 'Brithday Year':'BirthYear',
+       'Educational Degree':'EduDegree', 'Gross Monthly Salary':'GrossMthSalary',
+       'Geographic Living Area':'GeoLivArea', 'Has Children (Y=1)':'HasChild',
+       'Customer Monetary Value':'CustMonetVal', 'Claims Rate':'ClaimRate', 'Premiums in LOB: Motor':'PremLOBMotor',
+       'Premiums in LOB: Household':'PremLOBHousehold', 'Premiums in LOB: Health':'PremLOBHealth',
+       'Premiums in LOB:  Life':'PremLOBLife', 'Premiums in LOB: Work Compensations':'PremLOBWorkCompensation'}
+
+df.rename(columns=coldict, inplace=True)
+df.dropna(inplace=True)
+df.columns
 
 
+['CustId', '1stPolYear', 'BirthYear', 'EduDegree', 'GrossMthSalary',
+       'GeoLivArea', 'HasChild', 'CustMonetVal', 'ClaimRate', 'PremLOBMotor',
+       'PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife',
+       'PremLOBWorkCompensation']
+
+#Create data frame with only numerical values. Dropped CustId, Edu Degree, GeoLivArea, HasChild
+df_numerical=df[['1stPolYear', 'BirthYear', 'GrossMthSalary', 'CustMonetVal', 'ClaimRate', 'PremLOBMotor','PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife','PremLOBWorkCompensation']]
+
+#Scale data
+
+from sklearn.decomposition import PCA
+pca = PCA(n_components = 5)
+df_numerical = pca.fit_transform(df_numerical)
+#ex_var = pca.explained_variance_ratio_
+
+pca.fit(df_numerical)
+
+red_pca = np.dot(pca.transform(df_numerical)[:,:5],pca.components_[:5,:])
+red_pca += np.mean(df_numerical, axis=0)
+
+
+from sklearn.preprocessing import StandardScaler
+scaler=StandardScaler()
+df_numerical = scaler.fit_transform(df_numerical)
+
+
+#Plotting elbow graph to determine K
+wcss=[]
+for i in range(1,16):
+    kmeans=KMeans(n_clusters=i)
+    kmeans.fit(df_numerical)
+    wcss.append(kmeans.inertia_)\
+    #inertia = Sum of squared distances of samples to their closest cluster center.
+
+plt.plot(range(1,16), wcss, color='green')
+plt.title('Elbow Graph')
+plt.xlabel('Number of clusters K')
+plt.ylabel('WCSS')
+
+#Training the model
+kmeans=KMeans(n_clusters=9)
+df_numerical['kmean']=kmeans.fit_predict(df_numerical)
+
+df_numerical['kmean'].hist()
+l1 = [df['EduDegree'],df['HasChild'],df['GeoLivArea']]
+df['hc_split'] = pd.concat(, axis=1 )
+
+
+df['hc_split'] = df['EduDegree'].map(str) + df['HasChild'].map(str) + df['GeoLivArea'].map(str)
+sns.countplot('hc_split', data=df)
+
+df.drop(['EduDegree', 'HasChild','GeoLivArea'],inplace=True, axis=1)
+df.drop(['CustId'],inplace=True, axis=1)
+
+df_hc = df.drop(['hc_split'], axis=1)
+
+from sklearn.preprocessing import StandardScaler
+scaler=StandardScaler()
+df.columns.values
+df[['1stPolYear', 'BirthYear', 'GrossMthSalary', 'CustMonetVal',
+       'ClaimRate', 'PremLOBMotor', 'PremLOBHousehold', 'PremLOBHealth',
+       'PremLOBLife', 'PremLOBWorkCompensation']] = scaler.fit_transform(df['1stPolYear', 'BirthYear', 'GrossMthSalary', 'CustMonetVal',
+       'ClaimRate', 'PremLOBMotor', 'PremLOBHousehold', 'PremLOBHealth',
+       'PremLOBLife', 'PremLOBWorkCompensation'])
+
+X=dataset.iloc[:,[3,4]].values
+labels = df['hc_split'].values
+labels =list(labels)
+
+df_hc = df.iloc[:,:].values
+df_hc.set_index('hc_split')
+import scipy.cluster.hierarchy as sch
+dendrogram=sch.dendrogram(sch.linkage(df_hc, method='ward'), labels = labels)#ward minimizuje variance within cluster scatter
+plt.title('Dendrogram')
+plt.xlabel('Customers')
+plt.ylabel('Euclidean distances')
+plt.show()
