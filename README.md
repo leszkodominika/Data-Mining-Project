@@ -16,10 +16,10 @@ Create 2 datastes:
 4.Regression GrossMthSalary-BirthYear. Drop Birth Year
 5. KNN for has a child (X train should have no nulls if points 1 and 2 performed)
 6. Decision Tree for EduDegree 
-***************************************************************************************************************************************
+**************************************************************************************************************
 Remember to have arguments on why u use method X to replace the values. 
 Do Exploratory Data Analysis like in IP.
-****************************************************************MODELLING*****************************************************************
+****************************************************************MODELLING**************************************
 K Means: numeric columns only! Make sure you managed LOB Splitting.
 K Modes: categorical columns only!!!
 Hierarchical
