@@ -29,8 +29,11 @@ coldict={'Customer Identity':'CustId', 'First Policy´s Year':'1stPolYear', 'Bri
        'Premiums in LOB:  Life':'PremLOBLife', 'Premiums in LOB: Work Compensations':'PremLOBWorkCompensation'}
 df.rename(columns=coldict, inplace=True)
 
+#Drop CustId
+df.drop(['CustId'], axis=1, inplace=True)
 
-### 3. HANDLING OUTLIERS AND SKEWNESS##########################################
+
+### 3. HANDLING OUTLIERS, EXTREME VALUES & SKEWNESS############################
 
 df.shape#rows: 10296 
 
@@ -91,7 +94,6 @@ sns.boxplot(x=df['PremLOBWorkCompensation'])
 
 ### 4. HANDLING MISSING VALUES ################################################
 
-
 df = df.replace({'': np.nan})
 
 def missing_values_table(df):
@@ -127,7 +129,7 @@ missing_values_table(df)
 df['PremLOBHealth']=df['PremLOBHealth'].fillna(0)
 df['PremLOBMotor']=df['PremLOBMotor'].fillna(0)
 
-#Geogrpahy-NN (1 null- missing a lot of other columns, DROP!)
+#Drop null value in Geography because of poor quality of values in remaining columns
 df=df.dropna(subset=['GeoLivArea'])
 
 #1st Year-KNN (30 nulls - mean/median?)
@@ -138,17 +140,19 @@ df['1stPolYear'].hist()
 #### Replacing missing data with Regression ###################################
 
 # We need to do same the other way round: for Salary based on regression on Bday, is it correct? 
-
 y_train = df['BirthYear']
 y_test = y_train.loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))]
-X_train = pd.DataFrame(df['GrossMthSalary'].loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== True ]))])
+X_train = pd.DataFrame(df['GrossMthSalary'].loc[y_train.index.isin(list(y_train.index[(y_train >=0)== True ]))])
 X_test  = pd.DataFrame(df['GrossMthSalary'].loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))])
 y_train = y_train.dropna()
 
-from sklearn.linear_model import LinearRegression
+
+from sklearn.linear_model import LinearRegression#ERROR we r training on grossmthsalary with 33 null values
 regressor = LinearRegression()
 regressor.fit(X_train, y_train)
 y_pred= regressor.predict(X_test)
+
+X_train.isna().sum()
 
 i=0
 for index in y_test.index:
@@ -157,7 +161,7 @@ for index in y_test.index:
 
 #####Replacing missing data with K-Nearest Neighbors ###############################
 
-X = df.drop(columns=['HasChild'])
+X = df.drop(columns=['HasChild', 'EduDegree', 'GeoLivArea'])
 y = df['HasChild']
 
 y_train = y
@@ -174,6 +178,8 @@ X_test = sc.transform(X_test)
 from sklearn.neighbors import KNeighborsClassifier
 classifier = KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2)
 classifier.fit(X_train, y_train)
+
+X.isna().sum()
 
 y_pred = classifier.predict(X_test)
 
@@ -212,7 +218,7 @@ for index in y_test.index:
 
 
 ### 5. EXPLORATORY DATA ANALYSIS###############################################
-#to verify: drop null before visualizing?
+
 sns.set(rc={'figure.figsize':(20,20)})
 sns.heatmap(df.corr(), annot=True)
 
@@ -221,9 +227,6 @@ sns.pairplot(df)
 
 
 ### 6. FEATURE ENGINEERING AND SELECTION#######################################
-
-#Drop CustId
-df.drop(['CustId'], axis=1, inplace=True)
 
 #Convert EduDegree to dummies and drop one column to avoid dummy trap
 edu_dummies=pd.get_dummies(df['EduDegree'], drop_first=True)
@@ -335,7 +338,7 @@ wcss=[]
 for i in range(1,16):
     kmeans=KMeans(n_clusters=i)
     kmeans.fit(df_numerical)
-    wcss.append(kmeans.inertia_)\
+    wcss.append(kmeans.inertia_)
     #inertia = Sum of squared distances of samples to their closest cluster center.
 
 plt.plot(range(1,16), wcss, color='green')
