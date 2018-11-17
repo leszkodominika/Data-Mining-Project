@@ -1,9 +1,3 @@
-
-2) For remaining algorithms make sure if we use weights
--We do regression only on data without errors/outliers
--Implement one scaler (minmax/standard) and put some reasoning why we chose that one. 
--don’t scale binary
-
 1. Prem LOB columns: SPLITTING (2 models?). Will we use all of them? Maybe: Try to sum these columns and present as 1.
 2. In skewed distribution (mainly PremLobHousehold, Life, Compensation) 3 sigma rule drops 4.2% of data. Apply 3.5/4 sigma
 ********************************************NULL HANDLING************************************************
