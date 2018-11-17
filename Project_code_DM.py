@@ -70,7 +70,7 @@ plt.xlim(0,4000)
 #Skewed distribution -> Perform log transformation
 df['PremLOBHousehold']=np.log(df['PremLOBHousehold'] + 1 - min(df['PremLOBHousehold']))
 #Applying 3 sigma rule for outliers
-df=df[np.abs(df['PremLOBHousehold'] - df['PremLOBHousehold'].mean())<=3*df['PremLOBHousehold'].std()]
+df=df[np.abs(df['PremLOBHousehold'] - df['PremLOBHousehold'].mean())<4*df['PremLOBHousehold'].std()]
 sns.boxplot(x=df['PremLOBHousehold'])
 
 
@@ -79,7 +79,7 @@ df['PremLOBLife'].hist().set_title('Premiums in LOB: Life')
 #Skewed distribution -> Perform log transformation
 df['PremLOBLife']=np.log(df['PremLOBLife'] + 1 - min(df['PremLOBLife']))
 #Applying 3 sigma rule for outliers#
-df=df[np.abs(df['PremLOBLife'] - df['PremLOBLife'].mean())<=3*df['PremLOBLife'].std()]
+df=df[np.abs(df['PremLOBLife'] - df['PremLOBLife'].mean())<=4*df['PremLOBLife'].std()]
 sns.boxplot(x=df['PremLOBLife'])
 
 # SKEWED!!!!!!!!!Dropped 167
@@ -87,10 +87,12 @@ df['PremLOBWorkCompensation'].hist(bins=100).set_title('PremLOBWorkCompensation 
 #Skewed distribution -> Perform log transformation
 df['PremLOBWorkCompensation']=np.log(df['PremLOBWorkCompensation'] + 1 - min(df['PremLOBWorkCompensation']))
 #Applying 3 sigma rule for outliers
-df=df[np.abs(df['PremLOBWorkCompensation'] - df['PremLOBWorkCompensation'].mean())<=3*df['PremLOBWorkCompensation'].std()]
+df=df[np.abs(df['PremLOBWorkCompensation'] - df['PremLOBWorkCompensation'].mean())<=4*df['PremLOBWorkCompensation'].std()]
 sns.boxplot(x=df['PremLOBWorkCompensation'])
 
 #rows: 9862 --> meaning 434 rows dropped (4.2%)
+#3.5 sigma: 9927 rows --> 369 rows dropped (3.6%)
+#4 sigma:10022 rows --> 274 rows dropped (2.6%)
 
 ### 4. HANDLING MISSING VALUES ################################################
 
@@ -132,18 +134,31 @@ df['PremLOBMotor']=df['PremLOBMotor'].fillna(0)
 #Drop null value in Geography because of poor quality of values in remaining columns
 df=df.dropna(subset=['GeoLivArea'])
 
-#1st Year-KNN (30 nulls - mean/median?)
+#1st Year-KNN (28 nulls)
 plt.figure(figsize=(8,6))
 df['1stPolYear'].hist()
+#1963 values with 1stPolYear < BirthYear!!!!!!!!! 20% Let's drop BirthYear (after regression on BirthYear for GrossMthSalary)
+df[df['1stPolYear']<df['BirthYear']][['1stPolYear','BirthYear']]
+
+"""
+DOMINIKA: Drop BirthYear column as 1stYearPolicy is company data so more accurate. Additionally BirthYear is highly correlated 
+with GrossMthSalary
+"""
 
 
 #### Replacing missing data with Regression ###################################
 
-# We need to do same the other way round: for Salary based on regression on Bday, is it correct? 
-y_train = df['BirthYear']
+#y_train = df['GrossMthSalary']
+#y_test = y_train.loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))]
+#X_train = pd.DataFrame(df['BirthYear'].loc[y_train.index.isin(list(y_train.index[(y_train >=0)== True]))])
+#X_test  = pd.DataFrame(df['BirthYear'].loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))])
+#y_train = y_train.dropna()
+
+#DOMINIKA
+y_train = df[df['BirthYear'].isna()==False]['GrossMthSalary']
 y_test = y_train.loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))]
-X_train = pd.DataFrame(df['GrossMthSalary'].loc[y_train.index.isin(list(y_train.index[(y_train >=0)== True ]))])
-X_test  = pd.DataFrame(df['GrossMthSalary'].loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))])
+X_train = pd.DataFrame(df[df['BirthYear'].isna()==False]['BirthYear'].loc[y_train.index.isin(list(y_train.index[(y_train >=0)== True]))])
+X_test  = pd.DataFrame(df['BirthYear'].loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))])
 y_train = y_train.dropna()
 
 
@@ -152,14 +167,18 @@ regressor = LinearRegression()
 regressor.fit(X_train, y_train)
 y_pred= regressor.predict(X_test)
 
-X_train.isna().sum()
-
 i=0
 for index in y_test.index:
-    df['BirthYear'][index] = y_pred[i]
+    df['GrossMthSalary'][index] = y_pred[i]
     i+=1
 
+#Drop BirthYear because of high correlation with 1stPolYear 
+df.drop(['BirthYear'], axis=1, inplace=True)
+    
+
 #####Replacing missing data with K-Nearest Neighbors ###############################
+
+#DOMINIKA: Once we handle previously 1stPolYear then this will work properly
 
 X = df.drop(columns=['HasChild', 'EduDegree', 'GeoLivArea'])
 y = df['HasChild']
@@ -170,6 +189,7 @@ X_train = pd.DataFrame(X.loc[y_train.index.isin(list(y_train.index[(y_train >= -
 X_test = pd.DataFrame(X.loc[y_train.index.isin(list(y_train.index[(y_train >= -1)== False]))])
 y_train = y_train.dropna()
 
+
 from sklearn.preprocessing import StandardScaler
 sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
@@ -179,7 +199,6 @@ from sklearn.neighbors import KNeighborsClassifier
 classifier = KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2)
 classifier.fit(X_train, y_train)
 
-X.isna().sum()
 
 y_pred = classifier.predict(X_test)
 
@@ -187,9 +206,11 @@ i=0
 for index in y_test.index:
     df['HasChild'][index] = y_pred[i]
     i+=1
-       
-####Replacing missing data with Decision Tree   #####################################
     
+
+####Replacing missing data with Decision Tree   #####################################
+#DOMINIKA: Same here, Once we handle previously 1stPolYear then this will work properly
+  
 X = df.drop(columns=['EduDegree'])
 y = df['EduDegree']
 
@@ -211,6 +232,7 @@ regressor.fit(X_train, y_train)
 # Predicting a new result
 y_pred = regressor.predict(X_test)
 
+#DOMINIKA: This is wrong, need to first get labels back and then replace
 i=0
 for index in y_test.index:
     df['EduDegree'][index] = y_pred[i]
@@ -223,8 +245,6 @@ sns.set(rc={'figure.figsize':(20,20)})
 sns.heatmap(df.corr(), annot=True)
 
 sns.pairplot(df)
-
-
 
 ### 6. FEATURE ENGINEERING AND SELECTION#######################################
 
