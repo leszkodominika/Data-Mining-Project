@@ -1,8 +1,4 @@
-Our comments and tasks:
 
--Change Education to dummy, keep -1 column -DOMINIKA
-Create 2 datastes:
-1) For K-Means, hierarchical don’t use categorical columns
 2) For remaining algorithms make sure if we use weights
 -We do regression only on data without errors/outliers
 -Implement one scaler (minmax/standard) and put some reasoning why we chose that one. 
@@ -22,7 +18,7 @@ Do Exploratory Data Analysis like in IP.
 ****************************************************************MODELLING**************************************
 K Means: numeric columns only! Make sure you managed LOB Splitting.
 K Modes: categorical columns only!!!
-Hierarchical
+Hierarchical numeric columns only! Make sure you managed LOB Splitting.
 DBSCAN
 
 DO SCATTERPLOT FOR EACH VARIABLE COLORED BY CLASS LABEL TO SEE DEPENDENCIES.
