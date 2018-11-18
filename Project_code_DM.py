@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Oct 19 19:24:28 2018
-@author: dominika.leszko
-"""
 ### DATA MINING PROJECT #######################################################
 ###############################################################################
 
@@ -14,7 +9,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 ### 2. IMPORTING THE DATASET###################################################
-df=pd.read_csv(r'C:\Users\dominika.leszko\Desktop\NOVA IMS\Data Mining\DM Project\A2Z Insurance.csv')
+df=pd.read_csv('A2Z Insurance.csv')
 df = pd.DataFrame(df)
 
 #Display all columns
@@ -148,19 +143,12 @@ with GrossMthSalary
 
 #### Replacing missing data with Regression ###################################
 
-#y_train = df['GrossMthSalary']
-#y_test = y_train.loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))]
-#X_train = pd.DataFrame(df['BirthYear'].loc[y_train.index.isin(list(y_train.index[(y_train >=0)== True]))])
-#X_test  = pd.DataFrame(df['BirthYear'].loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))])
-#y_train = y_train.dropna()
-
-#DOMINIKA
+##DOMINIKA
 y_train = df[df['BirthYear'].isna()==False]['GrossMthSalary']
 y_test = y_train.loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))]
 X_train = pd.DataFrame(df[df['BirthYear'].isna()==False]['BirthYear'].loc[y_train.index.isin(list(y_train.index[(y_train >=0)== True]))])
 X_test  = pd.DataFrame(df['BirthYear'].loc[y_train.index.isin(list(y_train.index[(y_train >= 0)== False]))])
-y_train = y_train.dropna()
-
+y_train = pd.DataFrame(y_train.dropna())
 
 from sklearn.linear_model import LinearRegression#ERROR we r training on grossmthsalary with 33 null values
 regressor = LinearRegression()
@@ -172,15 +160,18 @@ for index in y_test.index:
     df['GrossMthSalary'][index] = y_pred[i]
     i+=1
 
-#Drop BirthYear because of high correlation with 1stPolYear 
-df.drop(['BirthYear'], axis=1, inplace=True)
+#from scipy.stats import linregress
+#X_train = np.array(X_train)
+#y_train = np.array(y_train)
+#slope, intercept, r_value, p_value, std_err = linregress(X_train[:,0], y_train[:,0])
+
     
 
 #####Replacing missing data with K-Nearest Neighbors ###############################
 
 #DOMINIKA: Once we handle previously 1stPolYear then this will work properly
-
-X = df.drop(columns=['HasChild', 'EduDegree', 'GeoLivArea'])
+# WE dont have to drop column with geoLivArea for decission tree but we dont want to multiply sets
+X = df.drop(columns=['HasChild', 'EduDegree', 'GeoLivArea',  '1stPolYear', 'BirthYear'])
 y = df['HasChild']
 
 y_train = y
@@ -190,29 +181,44 @@ X_test = pd.DataFrame(X.loc[y_train.index.isin(list(y_train.index[(y_train >= -1
 y_train = y_train.dropna()
 
 
-from sklearn.preprocessing import StandardScaler
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
+from sklearn.cross_validation import train_test_split
+X_train_train, X_train_test, y_train_train, y_train_test = train_test_split(X_train, y_train, test_size = 0.25, random_state = 0)
+
+
+from sklearn.tree import DecisionTreeClassifier
+tree = DecisionTreeClassifier(criterion = 'entropy', random_state = 0)
+tree.fit(X_train_train, y_train_train)
 
 from sklearn.neighbors import KNeighborsClassifier
-classifier = KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2)
-classifier.fit(X_train, y_train)
+knn = KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2)
+knn.fit(X_train_train, y_train_train)
 
+y_pred_1 = tree.predict(X_train_test)
+y_pred_2 = knn.predict(X_train_test)
 
-y_pred = classifier.predict(X_test)
+#dif_tree, dif_knn = 0, 0
+#for i in range(len(y_train_test)):
+dif_tree=np.abs(y_pred_1-y_train_test)
+dif_knn=np.abs(y_pred_2-y_train_test)
+print(np.sum(dif_tree)/len(y_train_test))
+print(np.sum(dif_knn)/len(y_train_test))
 
 i=0
 for index in y_test.index:
-    df['HasChild'][index] = y_pred[i]
+    df['HasChild'][index] = y_pred_2[i]
     i+=1
-    
+# We choose knn becuse avg mistake is smaller
 
 ####Replacing missing data with Decision Tree   #####################################
 #DOMINIKA: Same here, Once we handle previously 1stPolYear then this will work properly
-  
-X = df.drop(columns=['EduDegree'])
+X = df.drop(columns=['EduDegree', '1stPolYear', 'GeoLivArea','BirthYear'])
 y = df['EduDegree']
+
+#for index in y.index:
+#    if type(y[index]) == float:
+#        continue
+#    a = y[index].split(' ')[0]
+#    y[index] = int(a)
 
 y_train = y
 y_test = y.loc[y.isin(list(y[y.isna()== True]))]
@@ -220,25 +226,88 @@ X_train = pd.DataFrame(X.loc[y.isin(list(y[y.isna()== False]))])
 X_test  = pd.DataFrame(X.loc[y.isin(list(y[y.isna()== True ]))])
 y_train = y.dropna()
 
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-labelEncoder1 = LabelEncoder()
-y_train = labelEncoder1.fit_transform(y_train)
+from sklearn.cross_validation import train_test_split
+X_train_train, X_train_test, y_train_train, y_train_test = train_test_split(X_train, y_train, test_size = 0.25, random_state = 0)
 
-# Fitting Decision Tree Regression to the dataset
-from sklearn.tree import DecisionTreeRegressor
-regressor = DecisionTreeRegressor(random_state = 0)
-regressor.fit(X_train, y_train)
 
-# Predicting a new result
-y_pred = regressor.predict(X_test)
+from sklearn.tree import DecisionTreeClassifier
+tree = DecisionTreeClassifier(criterion = 'entropy', random_state = 0)
+tree.fit(X_train_train, y_train_train)
+
+from sklearn.neighbors import KNeighborsClassifier
+knn = KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2)
+knn.fit(X_train_train, y_train_train)
+
+y_pred_1 = tree.predict(X_train_test)
+y_pred_2 = knn.predict(X_train_test)
+
+from sklearn.metrics import confusion_matrix
+cm_tree = confusion_matrix(y_train_test, y_pred_1)
+cm_knn = confusion_matrix(y_train_test, y_pred_2)
+
+print(np.sum(cm_tree[i][i] for i in range(len(cm_tree))))
+print(np.sum(cm_knn[i][i] for i in range(len(cm_knn))))
+
+# We choose knn becuse avg mistake is smaller
 
 #DOMINIKA: This is wrong, need to first get labels back and then replace
 i=0
 for index in y_test.index:
-    df['EduDegree'][index] = y_pred[i]
-    i+=1       
+    df['EduDegree'][index] = y_pred_2[i]
+    i+=1   
+    
+# df['EduDegree'] = df['EduDegree'].astype(int)
+
+##### Replacing data in 1stYearPolicy
+
+# KONRAD: Since we have a string in EduDegree it is impossible 
+#to scale and so on so maybe using 1-4 scale is not so bad but 
+# still treat it as categorical variable
+    
+X = df.drop(columns=['1stPolYear', 'EduDegree', 'GeoLivArea','BirthYear'])
+y = df['1stPolYear']
+   
+y_train = y
+y_test = y.loc[y.isin(list(y[y.isna()== True]))]
+X_train = pd.DataFrame(X.loc[y.isin(list(y[y.isna()== False]))])
+X_test  = pd.DataFrame(X.loc[y.isin(list(y[y.isna()== True ]))])
+y_train = y.dropna()
+
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+from sklearn.cross_validation import train_test_split
+X_train_train, X_train_test, y_train_train, y_train_test = train_test_split(X_train, y_train, test_size = 0.25, random_state = 0)
 
 
+from sklearn.tree import DecisionTreeRegressor
+tree = DecisionTreeRegressor(criterion="mse", random_state = 0)
+tree.fit(X_train_train, y_train_train)
+
+from sklearn.neighbors import KNeighborsClassifier
+knn = KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2)
+knn.fit(X_train_train, y_train_train)
+
+y_pred_1 = tree.predict(X_train_test)
+y_pred_2 = knn.predict(X_train_test)
+
+#dif_tree, dif_knn = 0, 0
+#for i in range(len(y_train_test)):
+dif_tree=np.abs(y_pred_1-y_train_test)
+dif_knn=np.abs(y_pred_2-y_train_test)
+print(np.sum(dif_tree)/len(y_train_test))
+print(np.sum(dif_knn)/len(y_train_test))
+# We choose tree becuse avg mistake is smaller
+
+i=0
+for index in y_test.index:
+    df['1stPolYear'][index] = y_pred_1[i]
+    i+=1
+
+# we can try to select better column because avg error is 7-8 year which is a lot
+    
 ### 5. EXPLORATORY DATA ANALYSIS###############################################
 
 sns.set(rc={'figure.figsize':(20,20)})
@@ -252,6 +321,21 @@ sns.pairplot(df)
 edu_dummies=pd.get_dummies(df['EduDegree'], drop_first=True)
 df.drop(['EduDegree'], axis=1, inplace=True)
 df=pd.concat([df, edu_dummies], axis=1)
+df['HigherEdu'] = df['3 - BSc/MSc'] + df['4 - PhD']
+df.drop(['3 - BSc/MSc','4 - PhD'], axis=1, inplace=True)
+# KONRAD: MAYBE GOOD IDEA NOT TO SPLIT INTO FOR COLUMNS BUT 3 SO MASTER AND PHD TOGETHER
+
+# Feature engineering
+
+df['BirthYear_pred'] = (df['GrossMthSalary'] - regressor.intercept_)/regressor.coef_
+
+df['BirthYear_pred'] = 0
+for index in df.index:
+    df['BirthYear_pred'][index] = (df['GrossMthSalary'][index] - regressor.intercept_)/regressor.coef_
+df['BirthYear_pred'] = df['BirthYear_pred'].astype(int)
+
+#Drop BirthYear because of high correlation with 1stPolYear 
+df.drop(['BirthYear'], axis=1, inplace=True)
 
 
 #DO DATA SCALING AND MAKE MEAN=1,STD=1 (Z SCORE). We need it scale cause its clustering
