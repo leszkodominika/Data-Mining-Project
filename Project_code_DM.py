@@ -48,6 +48,16 @@ sns.boxplot(x=df['GrossMthSalary'])
 df=df.drop(df[df['GrossMthSalary']>30000].index)
 df['GrossMthSalary'].hist(bins=50).set_title('Gross  Monthly Salary')
 
+#Drop CustMonetVal< -2000
+df['CustMonetVal'].describe()
+sns.boxplot(x=df['CustMonetVal'])
+df=df.drop(df[df['CustMonetVal']<-2000].index) 
+
+#Drop ClaimRate > 20
+df['ClaimRate'].describe()
+sns.boxplot(x=df['ClaimRate'])
+df=df.drop(df[df['ClaimRate']>20].index) 
+
 df['PremLOBMotor'].describe()
 sns.boxplot(x=df['PremLOBMotor'])
 #Drop PremLOBMotor>2000
@@ -321,9 +331,15 @@ sns.pairplot(df)
 edu_dummies=pd.get_dummies(df['EduDegree'], drop_first=True)
 df.drop(['EduDegree'], axis=1, inplace=True)
 df=pd.concat([df, edu_dummies], axis=1)
+
+# Merging two categories (PhD only 1% of dataset)
 df['HigherEdu'] = df['3 - BSc/MSc'] + df['4 - PhD']
 df.drop(['3 - BSc/MSc','4 - PhD'], axis=1, inplace=True)
-# KONRAD: MAYBE GOOD IDEA NOT TO SPLIT INTO FOR COLUMNS BUT 3 SO MASTER AND PHD TOGETHER
+
+#Convert GeoLivArea to dummies and drop one column to avoid dummy trap
+edu_dummies=pd.get_dummies(df['GeoLivArea'], drop_first=True)
+df.drop(['GeoLivArea'], axis=1, inplace=True)
+df=pd.concat([df, edu_dummies], axis=1)
 
 # Feature engineering
 
@@ -389,59 +405,42 @@ df.drop(['BirthYear'], axis=1, inplace=True)
 
 from sklearn.cluster import KMeans
 
-df=pd.read_csv(r'C:\Users\dominika.leszko\Desktop\NOVA IMS\Data Mining\DM Project\A2Z Insurance.csv')
+df.drop(['BirthYear_pred'], axis=1, inplace=True)
 
-#from sklearn.preprocessing import Imputer
-df = pd.DataFrame(df)
+# Drop ClaimRate because it is in formula for Customer Monetary Value and corr is -0.99
+# Customer Monetary Value contains info about how long the customer is a client
+df.corr()
+df.drop(['ClaimRate'], axis=1, inplace=True)
 
-df = df.replace({'': np.nan})
-
-#Renaming columns for easier analysis
-df.columns.values
-
-coldict={'Customer Identity':'CustId', 'First Policy´s Year':'1stPolYear', 'Brithday Year':'BirthYear',
-       'Educational Degree':'EduDegree', 'Gross Monthly Salary':'GrossMthSalary',
-       'Geographic Living Area':'GeoLivArea', 'Has Children (Y=1)':'HasChild',
-       'Customer Monetary Value':'CustMonetVal', 'Claims Rate':'ClaimRate', 'Premiums in LOB: Motor':'PremLOBMotor',
-       'Premiums in LOB: Household':'PremLOBHousehold', 'Premiums in LOB: Health':'PremLOBHealth',
-       'Premiums in LOB:  Life':'PremLOBLife', 'Premiums in LOB: Work Compensations':'PremLOBWorkCompensation'}
-
-df.rename(columns=coldict, inplace=True)
-df.dropna(inplace=True)
-df.columns
-
-
-['CustId', '1stPolYear', 'BirthYear', 'EduDegree', 'GrossMthSalary',
-       'GeoLivArea', 'HasChild', 'CustMonetVal', 'ClaimRate', 'PremLOBMotor',
-       'PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife',
-       'PremLOBWorkCompensation']
 
 #Create data frame with only numerical values. Dropped CustId, Edu Degree, GeoLivArea, HasChild
-df_numerical=df[['1stPolYear', 'BirthYear', 'GrossMthSalary', 'CustMonetVal', 'ClaimRate', 'PremLOBMotor','PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife','PremLOBWorkCompensation']]
+#df_numerical=df[['1stPolYear', 'GrossMthSalary', 'CustMonetVal', 'PremLOBMotor','PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife','PremLOBWorkCompensation']]
+#df_customer=df[['1stPolYear', 'GrossMthSalary']]
+df_company=df[['CustMonetVal', 'PremLOBMotor','PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife','PremLOBWorkCompensation']]
 
 #Scale data
 
-from sklearn.decomposition import PCA
-pca = PCA(n_components = 5)
-df_numerical = pca.fit_transform(df_numerical)
+#from sklearn.decomposition import PCA
+#pca = PCA(n_components = None)
+#df_numerical = pca.fit_transform(df_numerical)
 #ex_var = pca.explained_variance_ratio_
 
-pca.fit(df_numerical)
+#pca.fit(df_numerical)
 
-red_pca = np.dot(pca.transform(df_numerical)[:,:5],pca.components_[:5,:])
-red_pca += np.mean(df_numerical, axis=0)
+#red_pca = np.dot(pca.transform(df_numerical)[:,:5],pca.components_[:5,:])
+#red_pca += np.mean(df_numerical, axis=0)
 
 
 from sklearn.preprocessing import StandardScaler
 scaler=StandardScaler()
-df_numerical = scaler.fit_transform(df_numerical)
+df_company = scaler.fit_transform(df_company)
 
-
+df_company = pd.DataFrame(df_company)
 #Plotting elbow graph to determine K
 wcss=[]
 for i in range(1,16):
     kmeans=KMeans(n_clusters=i)
-    kmeans.fit(df_numerical)
+    kmeans.fit(df_company)
     wcss.append(kmeans.inertia_)
     #inertia = Sum of squared distances of samples to their closest cluster center.
 
@@ -451,11 +450,21 @@ plt.xlabel('Number of clusters K')
 plt.ylabel('WCSS')
 
 #Training the model
-kmeans=KMeans(n_clusters=9)
-df_numerical['kmean']=kmeans.fit_predict(df_numerical)
+kmeans=KMeans(n_clusters=6)
+df_company['kmean']=kmeans.fit_predict(df_company)
 
-df_numerical['kmean'].hist()
-l1 = [df['EduDegree'],df['HasChild'],df['GeoLivArea']]
+df_company['kmean'].hist()
+#plt.scatter(df_company[0], df_company[1])
+plt.scatter(df_company[df_company['kmean']==0][2], df_company[df_company['kmean']==0][4], s = 100, c = 'red', label = 'Cluster 1')
+plt.scatter(df_company[df_company['kmean']==1][2], df_company[df_company['kmean']==1][4], s = 100, c = 'blue', label = 'Cluster 1')
+plt.scatter(df_company[df_company['kmean']==2][2], df_company[df_company['kmean']==2][4], s = 100, c = 'green', label = 'Cluster 1')
+
+
+sns.pairplot(df_company, hue='kmean')
+
+# ############################ Hierarchical Clustering
+
+#l1 = [df['EduDegree'],df['HasChild'],df['GeoLivArea']]
 #df['hc_split'] = pd.concat(, axis=1 )
 
 
@@ -487,4 +496,194 @@ dendrogram=sch.dendrogram(sch.linkage(df_hc, method='ward'), labels = labels)#wa
 plt.title('Dendrogram')
 plt.xlabel('Customers')
 plt.ylabel('Euclidean distances')
+plt.show()
+
+
+
+import numpy as np
+import pandas as pd
+
+import scipy
+from scipy.cluster.hierarchy import dendrogram, linkage#, set_link_color_pallete
+#from scipy.cluster.hierarchy import fcluster
+#from scipy.cluster.hierarchy import cophenet
+#from scipy.spatial.distance import pdist
+from scipy.cluster import hierarchy
+
+from pylab import rcParams
+import seaborn as sb
+import matplotlib.pyplot as plt
+
+import sklearn
+from sklearn.cluster import AgglomerativeClustering
+import sklearn.metrics as sm
+
+np.set_printoptions(precision=4,
+                    threshold = 200,
+                    suppress = True)
+
+plt.figure(figsize=(10,5))
+plt.style.use('seaborn-whitegrid')
+
+#Scipy generate dendrograms
+
+
+
+test = df[['1stPolYear','BirthYear','GrossMthSalary', 'GeoLivArea', 'HasChild']]
+test = test.dropna()
+
+my_scaler = StandardScaler()
+
+test = my_scaler.fit_transform(test)
+
+Z = linkage(test,
+            method = 'ward')#method='single, complete
+
+dendrogram(Z,
+           #truncate_mode='none',
+           truncate_mode='lastp',
+           p=40,
+           orientation = 'top',
+           leaf_rotation=45.,
+           leaf_font_size=10.,
+           show_contracted=True,
+           show_leaf_counts=True)
+
+plt.title('Truncated Hierarchical Clustering Dendrogram')
+plt.xlabel('Cluster Size')
+plt.ylabel('Distance')
+
+#plt.axhline(y=50)
+plt.axhline(y=55)
+plt.show()
+
+
+#Scikit
+
+k=4
+from sklearn.cluster import AgglomerativeClustering
+Hclustering = AgglomerativeClustering(n_clusters=k,
+                                      affinity='euclidean',
+                                      linkage='ward')
+
+#Replace the test with proper data
+my_HC = Hclustering.fit(test)
+
+my_labels = pd.DataFrame(my_HC.labels_)
+my_labels.columns =  ['Labels']
+
+test = pd.concat([pd.DataFrame(test), my_labels], axis=1)
+test.columns =  ['1stPolYear','BirthYear','GrossMthSalary', 'GeoLivArea', 'HasChild', 'Labels']
+
+to_revert = test.groupby(['Labels'])['1stPolYear','BirthYear','GrossMthSalary', 'GeoLivArea', 'HasChild'].mean()
+#to_revert = to_revert.loc[:,-'Index']
+
+my_scaler.inverse_transform(X=to_revert )
+test['Labels'].value_counts()
+
+
+
+
+#### DBSCAN
+
+
+from sklearn.cluster import DBSCAN
+from sklearn import metrics
+
+db = DBSCAN(eps=0.2,
+            min_samples=5).fit(test)
+
+labels = db.labels_
+
+# Number of clusters in labels, ignoring noise if present.
+n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+
+unique_clusters, counts_clusters = np.unique(db.labels_, return_counts = True)
+print(np.asarray((unique_clusters, counts_clusters)))
+
+from sklearn.decomposition import PCA
+pca = PCA(n_components = None).fit(test)
+pca_2d = pca.transform(test)
+explained_variance = pca.explained_variance_ratio_
+
+
+from sklearn.decomposition import PCA
+pca = PCA(n_components=2).fit(test)
+pca_2d = pca.transform(test)
+for i in range(0, pca_2d.shape[0]):
+    if db.labels_[i] == 0:
+        c1 = plt.scatter(pca_2d[i,0],pca_2d[i,1],c='r',marker='+')
+    elif db.labels_[i] == 1:
+        c2 = plt.scatter(pca_2d[i,0],pca_2d[i,1],c='g',marker='o')
+    elif db.labels_[i] == -1:
+        c3 = plt.scatter(pca_2d[i,0],pca_2d[i,1],c='b',marker='*')
+
+plt.legend([c1, c2, c3], ['Cluster 1', 'Cluster 2','Noise'])
+plt.title('DBSCAN finds 2 clusters and noise')
+plt.show()
+
+#Mean Shift
+
+import numpy as np
+from sklearn.cluster import MeanShift, estimate_bandwidth
+import matplotlib.pyplot as plt
+
+# Compute clustering with MeanShift
+
+to_MS = df_company
+to_MS = to_MS.dropna()
+#to_MS.income = to_MS.income.astype(int)
+
+#test = StandardScaler().fit_transform(test)
+#To reverse
+from sklearn.preprocessing import MinMaxScaler
+my_scaler = MinMaxScaler()
+
+to_MS = my_scaler.fit_transform(to_MS)
+
+
+# The following bandwidth can be automatically detected using
+my_bandwidth = estimate_bandwidth(to_MS,
+                               quantile=0.2,
+                               n_samples=1000)
+
+ms = MeanShift(bandwidth=my_bandwidth,
+               #bandwidth=0.15,
+               cluster_all=False,
+               bin_seeding=True)
+
+ms.fit(to_MS)
+labels = ms.labels_
+cluster_centers = ms.cluster_centers_
+
+labels_unique = np.unique(labels)
+n_clusters_ = len(labels_unique)
+
+
+#Values
+my_scaler.inverse_transform(X=cluster_centers)
+
+#Count
+unique, counts = np.unique(labels, return_counts=True)
+
+print(np.asarray((unique, counts)).T)
+
+# lets check our are they distributed
+
+from sklearn.decomposition import PCA
+pca = PCA(n_components=2).fit(to_MS)
+pca_2d = pca.transform(to_MS)
+for i in range(0, pca_2d.shape[0]):
+    if labels[i] == 0:
+        c1 = plt.scatter(pca_2d[i,0],pca_2d[i,1],c='r',marker='+')
+    elif labels[i] == 1:
+        c2 = plt.scatter(pca_2d[i,0],pca_2d[i,1],c='g',marker='o')
+    elif labels[i] == 2:
+        c3 = plt.scatter(pca_2d[i,0],pca_2d[i,1],c='b',marker='*')
+    elif labels[i] == -1:
+        c4 = plt.scatter(pca_2d[i,0],pca_2d[i,1],c='c',marker='H')
+    
+
+plt.legend([c1, c2, c3], ['Cluster 1', 'Cluster 2','Cluster 3', ','])
+plt.title('Mean Shift found 3 clusters')
 plt.show()
