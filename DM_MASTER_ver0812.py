@@ -320,41 +320,58 @@ sns.heatmap(df.corr(), annot=True)
 
 ###sns.pairplot(df) this gives an error 
 
-### 6. FEATURE ENGINEERING AND SELECTION#######################################
-
+## 6. FEATURE ENGINEERING AND SELECTION#######################################
+# compbine 3+4 for keepting cat 
 #Convert EduDegree to dummies and drop one column to avoid dummy trap
-edu_dummies=pd.get_dummies(df['EduDegree'], drop_first=True)
+edu_dummies=pd.get_dummies(df['EduDegree'], drop_first=False)
 df.drop(['EduDegree'], axis=1, inplace=True)
 df=pd.concat([df, edu_dummies], axis=1)
 
 # Merging two categories (PhD only 1% of dataset)
+df['LowerEdu'] = df['1 - Basic'] + df['2 - High School']
 df['HigherEdu'] = df['3 - BSc/MSc'] + df['4 - PhD']
 df.drop(['3 - BSc/MSc','4 - PhD'], axis=1, inplace=True)
 
-#Convert GeoLivArea to dummies and drop one column to avoid dummy trap
-edu_dummies=pd.get_dummies(df['GeoLivArea'], drop_first=True)
-df.drop(['GeoLivArea'], axis=1, inplace=True)
-df=pd.concat([df, edu_dummies], axis=1)
-df.rename(columns={2.0:'Geo_2', 3.0:'Geo_3', 4.0:'Geo_4'}, inplace=True)
+#Convert GeoLivArea to dummies and drop one column to avoid dummy trap no significant for clustering neigther on encoded nor catigorical level 
+#edu_dummies=pd.get_dummies(df['GeoLivArea'], drop_first=False)
+#df.drop(['GeoLivArea'], axis=1, inplace=True)
+#df=pd.concat([df, edu_dummies], axis=1)
+#df.rename(columns={1.0:'Geo_1', 2.0:'Geo_2', 3.0:'Geo_3', 4.0:'Geo_4'}, inplace=True)
+#
+
+
+df.reset_index(inplace=True, drop = True)
+
 
 # Feature engineering
 
-#df['BirthYear_pred'] = (df['GrossMthSalary'] - regressor.intercept_)/regressor.coef_
+#df['BirthYear_pred'] 
 
-'''THIS IS STILL NOT WORKING FOR ME'''
-
-
-
+#y = [1,2]
+#
+#
+#xx = pd.DataFrame()
+#xx['BirthYear_pred'] =y
+#
+#pd.Series(y, dtype = int)
+#yy=y.T
+#
+#y = ((df['GrossMthSalary'].tolist() - regressor.intercept_)/regressor.coef_)
+#y = df['GrossMthSalary'].tolist()
+#'''THIS IS STILL NOT WORKING FOR ME'''
+#
+#
+#
 #
 #
 #df['BirthYear_pred'] = 0
 #for index in df.index:
-#    df['BirthYear_pred'][index] = (df['GrossMthSalary'][index] - regressor.intercept_)/regressor.coef_
-#df['BirthYear_pred'] = df['BirthYear_pred'].astype(int)
+#    df.loc[:,'BirthYear_pred'][index] = (df.loc[:,'GrossMthSalary'][index] - regressor.intercept_)/regressor.coef_
+#df.loc['BirthYear_pred'] = df.loc['BirthYear_pred'].astype(int)
 #
 ##Drop BirthYear because of high correlation with 1stPolYear 
 #df.drop(['BirthYear'], axis=1, inplace=True)
-#
+
 
 #DO DATA SCALING AND MAKE MEAN=1,STD=1 (Z SCORE). We need it scale cause its clustering
 
@@ -422,36 +439,22 @@ df.rename(columns={2.0:'Geo_2', 3.0:'Geo_3', 4.0:'Geo_4'}, inplace=True)
 #
 ##### performing pca on all the LOB Premiums as they are correlated####
 #
-new_df=df_comp[['PremLOBMotor','PremLOBHousehold', 'PremLOBHealth','PremLOBLife', 'PremLOBWorkCompensation']]
+#new_df=df_comp[['PremLOBMotor','PremLOBHousehold', 'PremLOBHealth','PremLOBLife', 'PremLOBWorkCompensation']]
+##
+#from sklearn.decomposition import PCA
+#pca = PCA(n_components = 2)
+#new_df_pca = pca.fit_transform(new_df)
+#explained_variance = pca.explained_variance_ratio_
 #
-from sklearn.decomposition import PCA
-pca = PCA(n_components = 2)
-new_df_pca = pca.fit_transform(new_df)
-explained_variance = pca.explained_variance_ratio_
-
-df_pca=pd.DataFrame(new_df_pca)
-df_pca.reset_index(drop=True, inplace=True)
-df_pca['pca1'], df_pca['pca2']= new_df_pca.iloc[:,0],new_df_pca.iloc[:,1]
+#df_pca=pd.DataFrame(new_df_pca)
+#df_pca.reset_index(drop=True, inplace=True)
+#df_pca['pca1'], df_pca['pca2']= new_df_pca.iloc[:,0],new_df_pca.iloc[:,1]
 
 
 #'Premiums in LOB: Motor':'PremLOBMotor',
 #       'Premiums in LOB: Household':'PremLOBHousehold', 'Premiums in LOB: Health':'PremLOBHealth',
 #       'Premiums in LOB:  Life':'PremLOBLife', 'Premiums in LOB: Work Compensations':'PremLOBWorkCompensation'}
 #    
-df_comp = df [['PremLOBMotor', 'PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife', 'PremLOBWorkCompensation']]
-#sns.heatmap(df_comp.corr(), annot=True)
-
-# using PCA1 potenntial% and CustMonetVal  f
-
-
-###scaling the potentail data
-
-from sklearn.preprocessing import StandardScaler
-scaler=StandardScaler()
-df_comp = scaler.fit_transform(df_comp)
-
-df_comp = pd.DataFrame(df_comp)
-df_comp.columns = ['PremLOBMotor', 'PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife', 'PremLOBWorkCompensation']
 
 
 ############plot the distribution in 3d
@@ -545,39 +548,65 @@ df_comp.columns = ['PremLOBMotor', 'PremLOBHousehold', 'PremLOBHealth', 'PremLOB
 #ax.set_zlabel('CustMonet')
 ####end dbscan 
 #
+df_comp = df [['PremLOBMotor',
+               'PremLOBHousehold', 
+               'PremLOBHealth', 
+               'PremLOBLife', 
+               'PremLOBWorkCompensation']]
+#sns.heatmap(df_comp.corr(), annot=True)
+
+# using PCA1 potenntial% and CustMonetVal  f
+
+
+###scaling the potentail data
+
+from sklearn.preprocessing import StandardScaler
+scaler=StandardScaler()
+df_comp = scaler.fit_transform(df_comp)
+
+df_comp = pd.DataFrame(df_comp)
+df_comp.columns = ['PremLOBMotor', 
+                   'PremLOBHousehold', 
+                   'PremLOBHealth', 
+                   'PremLOBLife', 
+                   'PremLOBWorkCompensation']
+
 #
+######MEAN SHIFT
+#import numpy as np
+#from sklearn.cluster import MeanShift, estimate_bandwidth
+#my_bandwidth = estimate_bandwidth(df_pca,
+#                               quantile=0.03, n_jobs = -1)
 #
-#####MEAN SHIFT
-import numpy as np
-from sklearn.cluster import MeanShift, estimate_bandwidth
-my_bandwidth = estimate_bandwidth(df_pca,
-                               quantile=0.03, n_jobs = -1)
-
-ms = MeanShift(bandwidth=my_bandwidth, bin_seeding=True)
-
-ms.fit(df_pca)
-labels = ms.labels_
-cluster_centers = ms.cluster_centers_
-
-labels_unique = np.unique(labels)
-n_clusters_ = len(labels_unique)
-
-len(labels_unique)
-
-df_pca['mshift_label']=ms.labels_
-df_pca['mshift_label'].value_counts()
+#ms = MeanShift(bandwidth=my_bandwidth, bin_seeding=True)
+#
+#ms.fit(df_pca)
+#labels = ms.labels_
+#cluster_centers = ms.cluster_centers_
+#
+#labels_unique = np.unique(labels)
+#n_clusters_ = len(labels_unique)
+#
+#len(labels_unique)
+#
+#df_pca['mshift_label']=ms.labels_
+#df_pca['mshift_label'].value_counts()
 
 
 # Expectation-Maximization
 
 from sklearn import mixture
-gmm = mixture.GaussianMixture(n_components=3,
+gmm = mixture.GaussianMixture(n_components=2,
                               covariance_type='full',
                               init_params='kmeans',
                               max_iter=1000,
                               n_init=10)
 
-em_set=df_comp[['PremLOBMotor', 'PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife', 'PremLOBWorkCompensation']]
+em_set=df_comp[['PremLOBMotor', 
+                'PremLOBHousehold', 
+                'PremLOBHealth', 
+                'PremLOBLife', 
+                'PremLOBWorkCompensation']]
 gmm.fit(em_set)
 EM_labels_ = gmm.predict(em_set)
 #Elbow
@@ -598,7 +627,7 @@ for col in range(em_set_prob.shape[1]):
     y+=1
     
 
-df_comp['EM_label']=em_set_prob[:,0]+em_set_prob[:,1]+em_set_prob[:,2]#+em_set_prob[:,3]+em_set_prob[:,4]#+em_set_prob[:,5]
+df_comp['EM_label']=em_set_prob[:,0]+em_set_prob[:,1]#+em_set_prob[:,2]#+em_set_prob[:,3]#+em_set_prob[:,4]#+em_set_prob[:,5]
 df_comp['EM_label'].value_counts()
 #
 #my_color=[]
@@ -632,7 +661,11 @@ df_comp['EM_label'].value_counts()
 
 df_comp=df_comp.drop(['EM_label'], axis = 1)
 
-df_comp = pd.DataFrame(scaler.inverse_transform(X=df_comp), columns=['PremLOBMotor', 'PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife', 'PremLOBWorkCompensation'])
+df_comp = pd.DataFrame(scaler.inverse_transform(X=df_comp), columns=['PremLOBMotor',
+                       'PremLOBHousehold',
+                       'PremLOBHealth', 
+                       'PremLOBLife',
+                       'PremLOBWorkCompensation'])
 
 
 #back to original data
@@ -641,53 +674,99 @@ df_comp['PremLOBLife']=np.exp(df_comp['PremLOBLife']) -1-7#### this is the min i
 df_comp['PremLOBWorkCompensation']=np.exp(df_comp['PremLOBWorkCompensation'])- 1 -12 #### this is the min in the original data 
 
 
-df_comp['EM_label']=em_set_prob[:,0]+em_set_prob[:,1]+em_set_prob[:,2]#+em_set_prob[:,3]+em_set_prob[:,4]#+em_set_prob[:,5]
+df_comp['EM_label']=em_set_prob[:,0]+em_set_prob[:,1]#+em_set_prob[:,2]#+em_set_prob[:,3]#+em_set_prob[:,4]#+em_set_prob[:,5]
 
 ###plotting the three variabl distributions in EM clusters ####['PremLOBMotor', 'PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife', 'PremLOBWorkCompensation']
-
 # Sort the dataframe by target (potnetial)
 target_0 = df_comp.loc[df_comp['EM_label'] == 0]
 target_1 = df_comp.loc[df_comp['EM_label'] == 1]
 target_2 = df_comp.loc[df_comp['EM_label'] == 2]
 target_3 = df_comp.loc[df_comp['EM_label'] == 3]
+target_4 = df_comp.loc[df_comp['EM_label'] == 4]
 #potentail
 #sns.distplot(target_0['PremLOBMotor'], hist=False, kde=True, rug=False)
-sns.distplot(target_1['PremLOBMotor'], hist=False, kde=True, rug=False)
-sns.distplot(target_2['PremLOBMotor'], hist=False, kde=True, rug=False)
-sns.distplot(target_3['PremLOBMotor'], hist=False, kde=True, rug=False)
+sns.distplot(target_1['PremLOBMotor'], hist=False, kde=True, rug=False, color='green')#some what more
+sns.distplot(target_2['PremLOBMotor'], hist=False, kde=True, rug=False, color='blue')#get rebates
+sns.distplot(target_3['PremLOBMotor'], hist=False, kde=True, rug=False, color='red')#spend very much
+sns.distplot(target_4['PremLOBMotor'], hist=False, kde=True, rug=False, color='yellow')#same as blue almost but no rebase
 
 #pca1
 #sns.distplot(target_0['PremLOBHousehold'], hist=False, kde=True, rug=False)
-sns.distplot(target_1['PremLOBHousehold'], hist=False, kde=True, rug=False)
-sns.distplot(target_2['PremLOBHousehold'], hist=False, kde=True, rug=False)
-sns.distplot(target_3['PremLOBHousehold'], hist=False, kde=True,  rug=False)
-plt.xlim(0,500)
+sns.distplot(target_1['PremLOBHousehold'], hist=False, kde=True, rug=False, color='green')#not much spent
+sns.distplot(target_2['PremLOBHousehold'], hist=False, kde=True, rug=False, color='blue')#get rebates to very high
+sns.distplot(target_3['PremLOBHousehold'], hist=False, kde=True,  rug=False, color='red')#close to nothing spent
+sns.distplot(target_4['PremLOBHousehold'], hist=False, kde=True,  rug=False, color='yellow')#highest median
 
+###maybe health is not important for clusterong?? no it is very important for clustering !!!!
 #CustMonet
 #sns.distplot(target_0['PremLOBHealth'], hist=False, kde=True, rug=False)
-sns.distplot(target_1['PremLOBHealth'], hist=False, kde=True, rug=False)
-sns.distplot(target_2['PremLOBHealth'], hist=False, kde=True, rug=False)
-sns.distplot(target_3['PremLOBHealth'], hist=False, kde=True, rug=False)
+sns.distplot(target_1['PremLOBHealth'], hist=False, kde=True, rug=False, color='green')#2
+sns.distplot(target_2['PremLOBHealth'], hist=False, kde=True, rug=False, color='blue')#1
+sns.distplot(target_3['PremLOBHealth'], hist=False, kde=True, rug=False, color='red')#3
+sns.distplot(target_4['PremLOBHealth'], hist=False, kde=True, rug=False, color='yellow')#3
 
 #CustMonet
 #sns.distplot(target_0['PremLOBLife'], hist=False, kde=True, rug=False)
-sns.distplot(target_1['PremLOBLife'], hist=False, kde=True, rug=False)
-sns.distplot(target_2['PremLOBLife'], hist=False, kde=True, rug=False)
-sns.distplot(target_3['PremLOBLife'], hist=False, kde=True, rug=False)
+sns.distplot(target_1['PremLOBLife'], hist=False, kde=True, rug=False, color='green')#3
+sns.distplot(target_2['PremLOBLife'], hist=False, kde=True, rug=False, color='blue')#1
+sns.distplot(target_3['PremLOBLife'], hist=False, kde=True, rug=False, color='red')#2
+sns.distplot(target_4['PremLOBLife'], hist=False, kde=True, rug=False, color='yellow')#2
 
 
 #CustMonet
 #sns.distplot(target_0['PremLOBWorkCompensation'], hist=False, kde=True, rug=False)
-sns.distplot(target_1['PremLOBWorkCompensation'], hist=False, kde=True, rug=False)
-sns.distplot(target_2['PremLOBWorkCompensation'], hist=False, kde=True, rug=False)
-sns.distplot(target_3['PremLOBWorkCompensation'], hist=False, kde=True, rug=False)
+sns.distplot(target_1['PremLOBWorkCompensation'], hist=False, kde=True, rug=False, color='green')#3
+sns.distplot(target_2['PremLOBWorkCompensation'], hist=False, kde=True, rug=False, color='blue')#1
+sns.distplot(target_3['PremLOBWorkCompensation'], hist=False, kde=True, rug=False, color='red')#2
+sns.distplot(target_4['PremLOBWorkCompensation'], hist=False, kde=True, rug=False, color='yellow')#2
 
 
 
 
 
 
+### ms on cust data 
 
+cust_cont = df[[]]
+
+from kmodes.kprototypes import KPrototypes
+
+df.columns
+
+sns.distplot(df['ClaimRate'], hist=False, kde=True, rug=False, color='red')#2
+
+
+cust_cont = df[[ 'HasChild', 'HigherEdu']]
+to_scale= df[['GrossMthSalary', 'ClaimRate']]
+
+to_scale.corr()
+from sklearn.preprocessing import StandardScaler
+scaler=StandardScaler()
+
+xxx = pd.DataFrame(scaler.fit_transform(to_scale), columns=['GrossMthSalary', 'ClaimRate'])
+cust_cont['GrossMthSalary'],cust_cont['ClaimRate']=xxx['GrossMthSalary'] ,xxx['ClaimRate']
+
+
+missing_values_table(cust_cont)
+
+cust_cont = cust_cont.values
+
+
+kproto = KPrototypes(n_clusters=3, init='Huang', verbose=2)
+clusters = kproto.fit_predict(cust_cont, categorical=[0,1])
+clusters = pd.DataFrame(clusters, columns=['cluster'])
+
+cust_cont=pd.DataFrame(cust_cont, columns=['HasChild', 'HigherEdu','GrossMthSalary', 'ClaimRate'])
+### do binary for education 
+scaleed_back = pd.DataFrame(scaler.inverse_transform(X=cust_cont[['GrossMthSalary', 'ClaimRate']]), columns=['GrossMthSalary', 'ClaimRate'])
+## to do get original data back!! 
+cust_cont['GrossMthSalary'],cust_cont['ClaimRate'] = scaleed_back['GrossMthSalary'],scaleed_back['ClaimRate']
+
+cust_data = pd.concat([cust_cont,clusters], axis =1)
+
+clust_centersnom = kproto.cluster_centroids_[0]
+
+clust_centersnom = scaler.inverse_transform(clust_centersnom)
 
 
 ### k modes on cust data 
@@ -697,7 +776,7 @@ sns.distplot(target_3['PremLOBWorkCompensation'], hist=False, kde=True, rug=Fals
 import numpy as np
 from kmodes.kmodes import KModes
 
-my_modes = df[['Geo_2','Geo_3','Geo_4', '2 - High School', 'HigherEdu', 'HasChild']].astype(str)
+my_modes = df[['GeoLivArea','EduDegree', 'HasChild']].astype(str)
 
 km2 = KModes(n_clusters=2, 
             init='Huang', 
@@ -749,8 +828,16 @@ join_clust.columns =  ['Product','Customer']
 
 crosstab=pd.crosstab(join_clust.Product, join_clust.Customer)
 
-#Evaluate the Customer
+crosstab.index
+#cluster 2 viel für motor, und in allen anderen wenig
+#cluster 1 wenig für motor, viel für alles und mittel für health
+#cluster 3 überall normal etwas mehr in health 
 
+coldict={0.0:'High_edu__child', 1.0:'geo4__low_edu__child', 2.0:'geo_1_low_edu__child'}
+idxdict={0.0:'Outliers', 1.0:'wenig für motor, viel für alles und mittel für health ', 2.0:'viel für motor, und in allen anderen wenig', 3.0:'überall normal etwas mehr in health '}
+crosstab.rename(columns=coldict,index=idxdict , inplace=True)
+
+#Evaluate the Customer
 
 #from sklearn.decomposition import PCA
 #pca = PCA(n_components=2).fit(df_comp)
