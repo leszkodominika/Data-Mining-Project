@@ -339,9 +339,9 @@ df.drop(['3 - BSc/MSc','4 - PhD'], axis=1, inplace=True)
 #df.rename(columns={1.0:'Geo_1', 2.0:'Geo_2', 3.0:'Geo_3', 4.0:'Geo_4'}, inplace=True)
 #
 
-
+df['HigherEdu'].value_counts()
 df.reset_index(inplace=True, drop = True)
-
+df.columns.values
 
 # Feature engineering
 
@@ -627,7 +627,7 @@ for col in range(em_set_prob.shape[1]):
     y+=1
     
 
-df_comp['EM_label']=em_set_prob[:,0]+em_set_prob[:,1]#+em_set_prob[:,2]#+em_set_prob[:,3]#+em_set_prob[:,4]#+em_set_prob[:,5]
+df_comp['EM_label']=em_set_prob[:,0]+em_set_prob[:,1]#+em_set_prob[:,2]+em_set_prob[:,3]#+em_set_prob[:,4]#+em_set_prob[:,5]
 df_comp['EM_label'].value_counts()
 #
 #my_color=[]
@@ -674,7 +674,7 @@ df_comp['PremLOBLife']=np.exp(df_comp['PremLOBLife']) -1-7#### this is the min i
 df_comp['PremLOBWorkCompensation']=np.exp(df_comp['PremLOBWorkCompensation'])- 1 -12 #### this is the min in the original data 
 
 
-df_comp['EM_label']=em_set_prob[:,0]+em_set_prob[:,1]#+em_set_prob[:,2]#+em_set_prob[:,3]#+em_set_prob[:,4]#+em_set_prob[:,5]
+df_comp['EM_label']=em_set_prob[:,0]+em_set_prob[:,1]#+em_set_prob[:,2]+em_set_prob[:,3]#+em_set_prob[:,4]#+em_set_prob[:,5]
 
 ###plotting the three variabl distributions in EM clusters ####['PremLOBMotor', 'PremLOBHousehold', 'PremLOBHealth', 'PremLOBLife', 'PremLOBWorkCompensation']
 # Sort the dataframe by target (potnetial)
@@ -684,11 +684,66 @@ target_2 = df_comp.loc[df_comp['EM_label'] == 2]
 target_3 = df_comp.loc[df_comp['EM_label'] == 3]
 target_4 = df_comp.loc[df_comp['EM_label'] == 4]
 #potentail
+
+#2 clusters
+flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+sns.set_palette(flatui)
+df=df.drop(df[df['GrossMthSalary']<30000].index)
+sns.set_style("white")
+sns.distplot(target_1['PremLOBMotor'], hist=False, kde=True, rug=False, kde_kws={"lw": 5})#some what more
+sns.distplot(target_2['PremLOBMotor'], hist=False, kde=True, rug=False, kde_kws={"lw": 5}).set_title('Distribution of LOB Motor for 2 Clusters', fontsize=20, weight='bold')
+sns.despine()
+plt.xticks(size=18)
+plt.yticks(size=18)
+plt.xlabel('')
+plt.ylabel('')
+plt.legend(size=18)
+plt.show()
+
+#3 clusters
+flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+sns.set_palette(flatui)
+df=df.drop(df[df['GrossMthSalary']<30000].index)
+sns.set_style("white")
+sns.distplot(target_1['PremLOBMotor'], hist=False, kde=True, rug=False, kde_kws={"lw": 5})#some what more
+sns.distplot(target_2['PremLOBMotor'], hist=False, kde=True, rug=False, kde_kws={"lw": 5})
+sns.distplot(target_3['PremLOBMotor'], hist=False, kde=True, rug=False, kde_kws={"lw": 5})
+sns.distplot(target_4['PremLOBMotor'], hist=False, kde=True, rug=False, kde_kws={"lw": 5}).set_title('Distribution of LOB Motor for 4 Clusters', fontsize=20, weight='bold')
+sns.despine()
+plt.xticks(size=18)
+plt.yticks(size=18)
+plt.xlabel('')
+plt.ylabel('')
+plt.legend(size=18)
+plt.show()
+
+
+#3 clusters
+flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+sns.set_palette(flatui)
+df=df.drop(df[df['GrossMthSalary']<30000].index)
+sns.set_style("white")
+sns.distplot(target_1['PremLOBMotor'], hist=False, kde=True, rug=False, kde_kws={"lw": 5})#some what more
+sns.distplot(target_2['PremLOBMotor'], hist=False, kde=True, rug=False, kde_kws={"lw": 5})
+sns.distplot(target_3['PremLOBMotor'], hist=False, kde=True, rug=False, kde_kws={"lw": 5}).set_title('Distribution of LOB Motor for 3 Clusters', fontsize=20, weight='bold')
+sns.despine()
+plt.xticks(size=18)
+plt.yticks(size=18)
+plt.xlabel('')
+plt.ylabel('')
+plt.legend(size=18)
+plt.show()
+
+
 #sns.distplot(target_0['PremLOBMotor'], hist=False, kde=True, rug=False)
-sns.distplot(target_1['PremLOBMotor'], hist=False, kde=True, rug=False, color='green')#some what more
-sns.distplot(target_2['PremLOBMotor'], hist=False, kde=True, rug=False, color='blue')#get rebates
-sns.distplot(target_3['PremLOBMotor'], hist=False, kde=True, rug=False, color='red')#spend very much
+sns.distplot(target_1['PremLOBMotor'], hist=False, kde=True, rug=False)#some what more
+sns.distplot(target_2['PremLOBMotor'], hist=False, kde=True, rug=False)#get rebates
+sns.distplot(target_3['PremLOBMotor'], hist=False, kde=True, rug=False)#spend very much
 sns.distplot(target_4['PremLOBMotor'], hist=False, kde=True, rug=False, color='yellow')#same as blue almost but no rebase
+
+
+
+
 
 #pca1
 #sns.distplot(target_0['PremLOBHousehold'], hist=False, kde=True, rug=False)
@@ -696,6 +751,24 @@ sns.distplot(target_1['PremLOBHousehold'], hist=False, kde=True, rug=False, colo
 sns.distplot(target_2['PremLOBHousehold'], hist=False, kde=True, rug=False, color='blue')#get rebates to very high
 sns.distplot(target_3['PremLOBHousehold'], hist=False, kde=True,  rug=False, color='red')#close to nothing spent
 sns.distplot(target_4['PremLOBHousehold'], hist=False, kde=True,  rug=False, color='yellow')#highest median
+
+
+
+#2 clusters
+flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+sns.set_palette(flatui)
+df=df.drop(df[df['GrossMthSalary']<30000].index)
+sns.set_style("white")
+sns.distplot(target_1['PremLOBHousehold'], hist=False, kde=True, rug=False, kde_kws={"lw": 5})#some what more
+sns.distplot(target_2['PremLOBHousehold'], hist=False, kde=True, rug=False, kde_kws={"lw": 5}).set_title('Distribution of LOB Household for 2 Clusters', fontsize=20, weight='bold')
+sns.despine()
+plt.xticks(size=18)
+plt.yticks(size=18)
+plt.xlabel('')
+plt.ylabel('')
+plt.legend(size=18)
+plt.show()
+
 
 ###maybe health is not important for clusterong?? no it is very important for clustering !!!!
 #CustMonet
@@ -705,6 +778,24 @@ sns.distplot(target_2['PremLOBHealth'], hist=False, kde=True, rug=False, color='
 sns.distplot(target_3['PremLOBHealth'], hist=False, kde=True, rug=False, color='red')#3
 sns.distplot(target_4['PremLOBHealth'], hist=False, kde=True, rug=False, color='yellow')#3
 
+
+#2 clusters
+flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+sns.set_palette(flatui)
+df=df.drop(df[df['GrossMthSalary']<30000].index)
+sns.set_style("white")
+sns.distplot(target_1['PremLOBHealth'], hist=False, kde=True, rug=False, kde_kws={"lw": 5})#some what more
+sns.distplot(target_2['PremLOBHealth'], hist=False, kde=True, rug=False, kde_kws={"lw": 5}).set_title('Distribution of LOB Health for 2 Clusters', fontsize=20, weight='bold')
+sns.despine()
+plt.xticks(size=18)
+plt.yticks(size=18)
+plt.xlabel('')
+plt.ylabel('')
+plt.legend(size=18)
+plt.show()
+
+
+
 #CustMonet
 #sns.distplot(target_0['PremLOBLife'], hist=False, kde=True, rug=False)
 sns.distplot(target_1['PremLOBLife'], hist=False, kde=True, rug=False, color='green')#3
@@ -713,6 +804,21 @@ sns.distplot(target_3['PremLOBLife'], hist=False, kde=True, rug=False, color='re
 sns.distplot(target_4['PremLOBLife'], hist=False, kde=True, rug=False, color='yellow')#2
 
 
+#2 clusters
+flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+sns.set_palette(flatui)
+df=df.drop(df[df['GrossMthSalary']<30000].index)
+sns.set_style("white")
+sns.distplot(target_1['PremLOBLife'], hist=False, kde=True, rug=False, kde_kws={"lw": 5})#some what more
+sns.distplot(target_2['PremLOBLife'], hist=False, kde=True, rug=False, kde_kws={"lw": 5}).set_title('Distribution of LOB Life for 2 Clusters', fontsize=20, weight='bold')
+sns.despine()
+plt.xticks(size=18)
+plt.yticks(size=18)
+plt.xlabel('')
+plt.ylabel('')
+plt.legend(size=18)
+plt.show()
+
 #CustMonet
 #sns.distplot(target_0['PremLOBWorkCompensation'], hist=False, kde=True, rug=False)
 sns.distplot(target_1['PremLOBWorkCompensation'], hist=False, kde=True, rug=False, color='green')#3
@@ -720,20 +826,45 @@ sns.distplot(target_2['PremLOBWorkCompensation'], hist=False, kde=True, rug=Fals
 sns.distplot(target_3['PremLOBWorkCompensation'], hist=False, kde=True, rug=False, color='red')#2
 sns.distplot(target_4['PremLOBWorkCompensation'], hist=False, kde=True, rug=False, color='yellow')#2
 
+#2 clusters
+flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+sns.set_palette(flatui)
+df=df.drop(df[df['GrossMthSalary']<30000].index)
+sns.set_style("white")
+sns.distplot(target_1['PremLOBWorkCompensation'], hist=False, kde=True, rug=False, kde_kws={"lw": 5})#some what more
+sns.distplot(target_2['PremLOBWorkCompensation'], hist=False, kde=True, rug=False, kde_kws={"lw": 5}).set_title('Distribution of LOB Workcompensation for 2 Clusters', fontsize=20, weight='bold')
+sns.despine()
+plt.xticks(size=18)
+plt.yticks(size=18)
+plt.xlabel('')
+plt.ylabel('')
+plt.legend(size=18)
+plt.show()
 
 
+mean1_motor = target_1['PremLOBMotor'].mean()
+mean2_motor = target_2['PremLOBMotor'].mean()
+mean1_house = target_1['PremLOBHousehold'].mean()
+mean2_house = target_2['PremLOBHousehold'].mean()
+mean1_health = target_1['PremLOBHealth'].mean()
+mean2_health = target_2['PremLOBHealth'].mean()
+mean1_life = target_1['PremLOBLife'].mean()
+mean2_life = target_2['PremLOBLife'].mean()
+mean1_work = target_1['PremLOBWorkCompensation'].mean()
+mean2_work = target_2['PremLOBWorkCompensation'].mean()
 
-
+potential_1 = (mean2_motor-mean1_motor) 
+potential_2 = (mean1_house-mean2_house)+(mean1_health-mean2_health)+(mean1_life-mean2_life)+(mean1_work-mean2_work)
 
 ### ms on cust data 
 
-cust_cont = df[[]]
+#cust_cont = df[[]]
 
 from kmodes.kprototypes import KPrototypes
 
-df.columns
+#df.columns
 
-sns.distplot(df['ClaimRate'], hist=False, kde=True, rug=False, color='red')#2
+#sns.distplot(df['ClaimRate'], hist=False, kde=True, rug=False, color='red')#2
 
 
 cust_cont = df[[ 'HasChild', 'HigherEdu']]
@@ -773,49 +904,49 @@ clust_centersnom = scaler.inverse_transform(clust_centersnom)
 
 
 
-import numpy as np
-from kmodes.kmodes import KModes
-
-my_modes = df[['GeoLivArea','EduDegree', 'HasChild']].astype(str)
-
-km2 = KModes(n_clusters=2, 
-            init='Huang', 
-            n_init=5, 
-            verbose=1)
-
-clusters = km2.fit_predict(my_modes)
-
-km3 = KModes(n_clusters=3, 
-            init='Huang', 
-            n_init=5, 
-            verbose=1)
-
-clusters = km3.fit_predict(my_modes)
-
-km4 = KModes(n_clusters=4, 
-            init='Huang', 
-            n_init=5, 
-            verbose=1)
-
-clusters = km4.fit_predict(my_modes)
-
-km5 = KModes(n_clusters=5, 
-            init='Huang', 
-            n_init=5, 
-            verbose=1)
-
-clusters = km5.fit_predict(my_modes)
-
-# Print the cluster centroids
-print(km2.cluster_centroids_)
-print(km3.cluster_centroids_)
-print(km4.cluster_centroids_)
-print(km5.cluster_centroids_)
-
-clusters = pd.Series(clusters)
-my_modes= pd.concat([my_modes,clusters], axis=1)
-my_modes.iloc[:,-1].value_counts()
-
+#import numpy as np
+#from kmodes.kmodes import KModes
+#
+#my_modes = df[['GeoLivArea','EduDegree', 'HasChild']].astype(str)
+#
+#km2 = KModes(n_clusters=2, 
+#            init='Huang', 
+#            n_init=5, 
+#            verbose=1)
+#
+#clusters = km2.fit_predict(my_modes)
+#
+#km3 = KModes(n_clusters=3, 
+#            init='Huang', 
+#            n_init=5, 
+#            verbose=1)
+#
+#clusters = km3.fit_predict(my_modes)
+#
+#km4 = KModes(n_clusters=4, 
+#            init='Huang', 
+#            n_init=5, 
+#            verbose=1)
+#
+#clusters = km4.fit_predict(my_modes)
+#
+#km5 = KModes(n_clusters=5, 
+#            init='Huang', 
+#            n_init=5, 
+#            verbose=1)
+#
+#clusters = km5.fit_predict(my_modes)
+#
+## Print the cluster centroids
+#print(km2.cluster_centroids_)
+#print(km3.cluster_centroids_)
+#print(km4.cluster_centroids_)
+#print(km5.cluster_centroids_)
+#
+#clusters = pd.Series(clusters)
+#my_modes= pd.concat([my_modes,clusters], axis=1)
+#my_modes.iloc[:,-1].value_counts()
+#
 
 
 
@@ -826,16 +957,36 @@ import numpy as np
 join_clust = pd.DataFrame(np.column_stack((df_comp['EM_label'],clusters)))
 join_clust.columns =  ['Product','Customer']
 
-crosstab=pd.crosstab(join_clust.Product, join_clust.Customer)
+crosstab=pd.crosstab(join_clust.Customer,join_clust.Product)
 
 crosstab.index
 #cluster 2 viel für motor, und in allen anderen wenig
 #cluster 1 wenig für motor, viel für alles und mittel für health
 #cluster 3 überall normal etwas mehr in health 
 
-coldict={0.0:'High_edu__child', 1.0:'geo4__low_edu__child', 2.0:'geo_1_low_edu__child'}
-idxdict={0.0:'Outliers', 1.0:'wenig für motor, viel für alles und mittel für health ', 2.0:'viel für motor, und in allen anderen wenig', 3.0:'überall normal etwas mehr in health '}
+coldict={0.0:'Unsure', 1.0:'Low on Motor, but everything else', 2.0:'High on motor, but everything else'}
+idxdict={0.0:'Medium Salary | Low claims | Children | High Education', 1.0:'Low Salary | High claims | Children | Low Education', 2.0:'High Salary | Medium high claims | No children | High Education'}
 crosstab.rename(columns=coldict,index=idxdict , inplace=True)
+
+
+
+treeplot1 = pd.DataFrame(crosstab.iloc[:,1]*potential_1)
+treeplot2 =pd.DataFrame(crosstab.iloc[:,2]*potential_2)
+
+import matplotlib.pyplot as plt
+import squarify # pip install squarify (algorithm for treemap)
+ 
+# Change color
+squarify.plot(sizes=[265336.7513616276,400743.1235386683,303668.70230880455,931734.8204554497,712473.3110765314,605627.6332960423],
+              label=["Low Motor and  Medium Salary | Low claims | Children | High Education", "Low Motor and Low Salary | High claims | Children | Low Education", "Low Motor and High Salary | Medium high claims | No children | High Education", "High Motor and  Medium Salary | Low claims | Children | High Education", "High Motor and Low Salary | High claims | Children | Low Education", "High Motor and High Salary | Medium high claims | No children | High Education"],
+              color = ['#713b87', '#9b59b6', '#bb8dcd', '#1d6fa5', '#217ebb','#8bc5ea'])
+plt.axis('off')
+plt.show()
+
+
+
+
+
 
 #Evaluate the Customer
 
